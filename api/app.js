@@ -9,14 +9,14 @@ const mongoose = require('mongoose')
 const { createServer } = require('http')
 const { Server } = require('socket.io')
 const Socket = require('./socket')
-
+/* 
 const adminAuthRoutes = require('./routes/admin/route')
 
 const patientAuthRoutes = require('./routes/auth/user')
 const doctorAuthRoutes = require('./routes/auth/doctor')
 
 const patientAppointments = require('./routes/appointment/user')
-const doctorAppointment = require('./routes/appointment/doctor')
+const doctorAppointment = require('./routes/appointment/doctor') */
 
 const app = express()
 
@@ -42,7 +42,7 @@ app.use((req, res, next) => {
   next()
 })
 
-// Admin auth route registration
+/* // Admin auth route registration
 app.use('/admin', adminAuthRoutes)
 
 // Auth route registration.
@@ -51,7 +51,7 @@ app.use('/doctor', doctorAuthRoutes)
 
 // Appointment router registration
 app.use('/patient', patientAppointments)
-app.use('/doctor', doctorAppointment)
+app.use('/doctor', doctorAppointment) */
 
 // Test route to verify server is running
 app.get('/', (req, res) => {
