@@ -24,6 +24,11 @@ exports.loginDoctor = async (req, res) => {
           "No account with email exist, please see doctor to create account.",
       });
     }
+    if (doctor.role !== "doctor") {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: "Can not perform login, doctor privileges required",
+      });
+    }
 
     const passwordMatch = await bcrypt.compare(password, doctor.password);
     if (!passwordMatch) {
