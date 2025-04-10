@@ -43,12 +43,18 @@ const doctorSchema = new Schema(
         ref: "Appointment",
       },
     ],
+    notifications: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Notification",
+      },
+    ],
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: "Admin",
     },
   },
-  { timestamps: true }
+  { timestamps: true }  
 );
 
 module.exports = mongoose.model("Doctor", doctorSchema);

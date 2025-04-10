@@ -3,6 +3,7 @@ const { StatusCodes } = require("http-status-codes");
 const Appointment = require("../../models/appointment");
 const User = require("../../models/user");
 const Doctor = require("../../models/doctor");
+const Notification = require("../../models/notification");
 
 exports.viewAppointments = async (req, res) => {
   try {
@@ -74,7 +75,7 @@ exports.createAppointment = async (req, res) => {
     }
     const doctorId = doc._id;
 
-    const user = User.findOne({ _id: patientId });
+    const user = await User.findOne({ _id: patientId });
 
     if (!user) {
       return res.status(StatusCodes.BAD_REQUEST).json({
@@ -92,13 +93,11 @@ exports.createAppointment = async (req, res) => {
       notes,
     });
 
+    // Push appointment to both patient and doctor.
     user.appointments.push(createdAppointment);
     doc.appointments.push(createdAppointment);
 
-    await user.save();
-    await doc.save();
-
-    // create notification.
+    // create notification and push notification.
     const notification = new Notification({
       sender: patientId,
       receiver: doctorId,
@@ -106,9 +105,17 @@ exports.createAppointment = async (req, res) => {
       message: "Appointment request sent successfully.",
       appointment: createdAppointment._id,
     });
+
     const notify = await notification.save();
 
-    // to created appointment to db.
+    // Push notifications ref to patient, doctor and appointment.
+    user.notifications.push(notify._id);
+    doc.notifications.push(notify._id);
+    createdAppointment.notifications.push(notify._id);
+
+    // save created appointment to db.
+    await user.save();
+    await doc.save();
     const data = await createdAppointment.save();
 
     res.status(StatusCodes.CREATED).json({
@@ -137,10 +144,9 @@ exports.updateAppointment = async (req, res) => {
       });
     }
 
-    // If new doctor selected, update the doctorId and update the doctor model ref.
-    let newDoctor = null;
+    // Handle doctor change
     if (doctor) {
-      newDoctor = await Doctor.findOne({ name: doctor });
+      const newDoctor = await Doctor.findOne({ name: doctor });
       if (!newDoctor) {
         return res.status(StatusCodes.BAD_REQUEST).json({
           message: "No doctor found",
@@ -150,14 +156,11 @@ exports.updateAppointment = async (req, res) => {
       const oldDoctorId = appointment.doctorId.toString();
       const newDoctorId = newDoctor._id.toString();
 
-      // Only update if doctor changed
       if (oldDoctorId !== newDoctorId) {
-        // Remove from old doctor.
         await Doctor.findByIdAndUpdate(oldDoctorId, {
           $pull: { appointments: appointment._id },
         });
 
-        // Add to new doctor
         await Doctor.findByIdAndUpdate(newDoctorId, {
           $addToSet: { appointments: appointment._id },
         });
@@ -174,6 +177,7 @@ exports.updateAppointment = async (req, res) => {
 
     const updatedAppointment = appointment.save();
 
+    // Create and push notification.
     const notification = new Notification({
       sender: user.id,
       receiver: appointment.doctorId,
@@ -182,6 +186,16 @@ exports.updateAppointment = async (req, res) => {
       appointment: appointment._id,
     });
     const notify = await notification.save();
+
+    await User.findByIdAndUpdate(user.id, {
+      $addToSet: { notifications: notify._id },
+    });
+    await Doctor.findByIdAndUpdate(appointment.doctorId, {
+      $addToSet: { notification: notify._id },
+    });
+
+    appointment.notifications.push(notify._id);
+    await appointment.save();
 
     res.status(StatusCodes.CREATED).json({
       message: "appointment updated",

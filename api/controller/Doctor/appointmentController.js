@@ -6,12 +6,20 @@ const User = require("../../models/user");
 
 exports.viewAppointments = async (req, res) => {
   try {
-    const doctorId = req.userId;
+    const doctorId = req.user.id;
+
+    console.log('doctor appointments id: ', doctorId)
 
     const appointments = await Appointment.find({ doctorId: doctorId })
-      .populate("patientId", "email name reason notes")
       .populate("doctorId", "name email specialization department")
+      .populate("patientId", "email name reason notes")
       .sort({ createdAt: -1 });
+
+    if (!appointments) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: "error viewing doctors appointment",
+      });
+    }
 
     res.status(StatusCodes.OK).json({
       message: "doctor appointments",

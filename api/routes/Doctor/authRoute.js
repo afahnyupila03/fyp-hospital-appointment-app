@@ -5,6 +5,6 @@ const {
 } = require("../../controller/Doctor/authController");
 
 module.exports = (router) => {
-  router.post("/login", restrictTo("doctor"), loginDoctor);
-  router.post("/logout", auth, logoutDoctor);
+  router.post("/login", loginDoctor);
+  router.post("/logout", auth, restrictTo("doctor"), logoutDoctor);
 };

@@ -6,11 +6,15 @@ const Doctor = require("../../models/doctor");
 const Logout = require("../../models/logout");
 
 const generateToken = (user) => {
-  return jwt.sign({
-    email: user.email,
-    id: user._id,
-    role: user.role,
-  });
+  return jwt.sign(
+    {
+      email: user.email,
+      id: user._id,
+      role: user.role,
+    },
+    "doctor_secret_token",
+    { expiresIn: "2hr" }
+  );
 };
 
 exports.loginDoctor = async (req, res) => {
