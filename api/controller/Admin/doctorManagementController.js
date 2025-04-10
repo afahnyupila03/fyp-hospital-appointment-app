@@ -1,4 +1,5 @@
 const Doctor = require("../../models/doctor");
+const Schedule = require("../../models/schedule");
 
 const bcrypt = require("bcrypt");
 const { StatusCodes } = require("http-status-codes");
@@ -6,7 +7,14 @@ const { StatusCodes } = require("http-status-codes");
 exports.createDoctor = async (req, res) => {
   try {
     const user = req.user;
-    const { name, email, password, specialization, department } = req.body;
+    const { name, email, password, specialization, department, schedule } =
+      req.body;
+
+    if (!Array.isArray(schedule) || schedule.length === 0) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: "At least one schedule entry (date and time) is required",
+      });
+    }
 
     const existingUser = await Doctor.findOne({ email: email });
     if (existingUser) {
@@ -17,6 +25,7 @@ exports.createDoctor = async (req, res) => {
 
     const hashPassword = await bcrypt.hash(password, 12);
 
+    // STEP_1 Create doctor without schedule
     const doctor = new User({
       name,
       email,
@@ -26,11 +35,34 @@ exports.createDoctor = async (req, res) => {
       createdBy: user.id,
     });
 
-    const result = await doctor.save();
+    const savedDoctor = await doctor.save();
+
+    // STEP_2 create the schedule entries and attach to doctor
+    const scheduleEntries = [];
+    for (const entry of schedule) {
+      const { day, times } = entry;
+      if (!day || !Array.isArray(times) || times.length === 0) {
+        continue; // Skip invalid entries
+      }
+
+      for (const time of times) {
+        const scheduleDoc = new Schedule({
+          doctorID: savedDoctor._id,
+          dat,
+          time,
+        });
+        const savedSchedule = await scheduleDoc.save();
+        scheduleEntries.push(savedSchedule._id);
+      }
+    }
+
+    // STEP_3 update te doctor with schedule references.
+    savedDoctor.schedules = scheduleEntries;
+    await savedDoctor.save();
 
     res.status(StatusCodes.CREATED).json({
       message: "doctor account created",
-      result,
+      savedDoctor,
     });
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -91,7 +123,7 @@ exports.viewDoctor = async (req, res) => {
 exports.updateDoctor = async (req, res) => {
   try {
     const { id } = req.params;
-    const { email, name, specialization, department } = req.body;
+    const { email, name, specialization, department, schedule } = req.body;
 
     const doctor = await Doctor.findById(id);
 
@@ -101,16 +133,44 @@ exports.updateDoctor = async (req, res) => {
       });
     }
 
+    // Update basic info
     doctor.email = email || doctor.email;
     doctor.name = name || doctor.name;
     doctor.specialization = specialization || doctor.specialization;
     doctor.department = department || doctor.department;
 
+    // If schedule is provided, replace it
+    if (Array.isArray(schedule) && schedule.length > 0) {
+      // Delete existing schedules
+      await Schedule.deleteMany({ doctor: doctor._id });
+
+      // Create new schedule documents
+      const scheduleDocs = [];
+
+      for (const entry of schedule) {
+        const { day, times } = entry;
+        if (!day || !Array.isArray(times) || times.length === 0) continue;
+
+        for (const time of times) {
+          const newSchedule = new Schedule({
+            doctor: doctor._id,
+            day,
+            time,
+          });
+          const saved = await newSchedule.save();
+          scheduleDocs.push(saved._id);
+        }
+      }
+
+      // Attach updated schedule IDs to the doctor
+      doctor.schedules = scheduleDocs;
+    }
+
     const updatedDoctor = await doctor.save();
 
-    res.status(StatusCodes.CREATED).json({
-      message: "doctor update success",
-      updatedDoctor,
+    res.status(StatusCodes.OK).json({
+      message: "Doctor updated successfully",
+      doctor: updatedDoctor,
     });
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
