@@ -7,7 +7,7 @@ const scheduleSchema = new Schema({
   doctorId: {
     type: Schema.Types.ObjectId,
     ref: "Doctor",
-    required: true,
+    // required: true,
   },
   day: {
     type: String,

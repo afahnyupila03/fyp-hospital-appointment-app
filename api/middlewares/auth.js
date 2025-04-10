@@ -63,7 +63,7 @@ exports.auth = async (req, res, next) => {
     }
 
     const MODEL = ROLE_MODELS[matchedRole];
-    const user = await MODEL.findById(decoded.userId);
+    const user = await MODEL.findById(decoded.id);
 
     if (!user) {
       return res.status(StatusCodes.UNAUTHORIZED).json({

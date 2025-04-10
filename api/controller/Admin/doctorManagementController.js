@@ -26,7 +26,7 @@ exports.createDoctor = async (req, res) => {
     const hashPassword = await bcrypt.hash(password, 12);
 
     // STEP_1 Create doctor without schedule
-    const doctor = new User({
+    const doctor = new Doctor({
       name,
       email,
       password: hashPassword,
@@ -47,8 +47,8 @@ exports.createDoctor = async (req, res) => {
 
       for (const time of times) {
         const scheduleDoc = new Schedule({
-          doctorID: savedDoctor._id,
-          dat,
+          doctorId: savedDoctor._id,
+          day,
           time,
         });
         const savedSchedule = await scheduleDoc.save();
@@ -184,7 +184,7 @@ exports.deleteDoctor = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const doctor = await User.findByIdAndDelete(id);
+    const doctor = await Doctor.findByIdAndDelete(id);
 
     if (!doctor || doctor.role !== "doctor") {
       return res
