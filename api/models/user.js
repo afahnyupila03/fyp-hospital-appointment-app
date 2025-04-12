@@ -25,8 +25,13 @@ const userSchema = new Schema(
         type: Schema.Types.ObjectId,
         ref: "Appointment",
       },
-    ]
-    
+    ],
+    notifications: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Notification",
+      },
+    ],
   },
   { timestamps: true }
 );

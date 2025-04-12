@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const { specialties, departments, TIME_SLOTS } = require("../constants/index");
+const { specialties, departments } = require("../constants/index");
 
 const doctorSchema = new Schema(
   {
@@ -26,10 +26,13 @@ const doctorSchema = new Schema(
       type: String,
       required: true,
     },
-    timeSlot: {
-      type: String,
-      enum: TIME_SLOTS,
-    },
+    schedules: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Schedule",
+        required: true,
+      },
+    ],
     role: {
       type: String,
       default: "doctor",
@@ -40,12 +43,18 @@ const doctorSchema = new Schema(
         ref: "Appointment",
       },
     ],
+    notifications: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Notification",
+      },
+    ],
     createdBy: {
       type: Schema.Types.ObjectId,
-      ref: 'Admin'
-    }
+      ref: "Admin",
+    },
   },
-  { timestamps: true }
+  { timestamps: true }  
 );
 
 module.exports = mongoose.model("Doctor", doctorSchema);

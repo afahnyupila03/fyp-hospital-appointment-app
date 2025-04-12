@@ -3,6 +3,8 @@ const bcrypt = require("bcrypt");
 const { StatusCodes } = require("http-status-codes");
 const jwt = require("jsonwebtoken");
 
+const Logout = require('../../models/logout')
+
 const generateToken = (user) => {
   return jwt.sign(
     {
@@ -104,7 +106,8 @@ exports.logoutAdmin = async (req, res) => {
       });
     }
 
-    const blacklisted = await Admin.findOne({ token });
+    const blacklisted = await Admin.findOne({ token })
+    .populate('_id');
     if (blacklisted) {
       return res.status(StatusCodes.UNAUTHORIZED).json({
         message: "user account signed out, please login again",
