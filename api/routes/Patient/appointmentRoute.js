@@ -3,6 +3,8 @@ const {
   viewAppointment,
   createAppointment,
   updateAppointment,
+  viewDoctors,
+  viewDoctor,
 } = require("../../controller/Patient/appointments");
 const { auth, restrictTo } = require("../../middlewares/auth");
 
@@ -31,4 +33,6 @@ module.exports = (router) => {
     restrictTo("patient"),
     updateAppointment
   );
+  router.get("/doctors", auth, restrictTo("patient"), viewDoctors);
+  router.get("/doctors", auth, restrictTo("patient"), viewDoctor);
 };

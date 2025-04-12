@@ -215,3 +215,49 @@ exports.updateAppointment = async (req, res) => {
     });
   }
 };
+
+exports.viewDoctors = async (req, res) => {
+  try {
+    const doctors = await Doctor.find().populate();
+
+    if (!doctors || doctors.length === 0) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        message: "no doctors found in db.",
+      });
+    }
+
+    res.status(StatusCodes.OK).json({
+      message: "patient viewing all doctors",
+      doctors,
+    });
+  } catch (error) {
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: "Error finding doctors",
+      error: error.message,
+    });
+  }
+};
+
+exports.viewDoctor = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const doctor = await Doctor.findOne({ _id: id });
+
+    if (!doctor) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        message: "doctor profile not found",
+      });
+    }
+
+    res.status(StatusCodes.OK).json({
+      message: "patient doctor profile",
+      doctor,
+    });
+  } catch (error) {
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: "error viewing doctor profile",
+      error: error.message,
+    });
+  }
+};
