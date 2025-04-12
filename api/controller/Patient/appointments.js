@@ -137,7 +137,10 @@ exports.updateAppointment = async (req, res) => {
     const { doctor, date, timeSlot, reason, notes } = req.body;
     const { id } = req.params;
 
-    const appointment = await Appointment.findById(id);
+    const appointment = await Appointment.findById(id).populate(
+      "notifications",
+      "sender receiver type message appointment status"
+    );
     if (!appointment) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         message: "appointment does not exist",
@@ -145,8 +148,9 @@ exports.updateAppointment = async (req, res) => {
     }
 
     // Handle doctor change
+    let newDoctor;
     if (doctor) {
-      const newDoctor = await Doctor.findOne({ name: doctor });
+      newDoctor = await Doctor.findOne({ name: doctor });
       if (!newDoctor) {
         return res.status(StatusCodes.BAD_REQUEST).json({
           message: "No doctor found",
@@ -175,14 +179,16 @@ exports.updateAppointment = async (req, res) => {
     if (reason) appointment.reason = reason;
     if (notes) appointment.notes = notes;
 
-    const updatedAppointment = appointment.save();
+    const updatedAppointment = await appointment.save();
 
     // Create and push notification.
     const notification = new Notification({
       sender: user.id,
       receiver: appointment.doctorId,
-      type: "appointment_request_update",
-      message: "Appointment request updated.",
+      type: newDoctor ? "appointment_request" : "appointment_request_update",
+      message: newDoctor
+        ? "Appointment request"
+        : "Appointment request update.",
       appointment: appointment._id,
     });
     const notify = await notification.save();
