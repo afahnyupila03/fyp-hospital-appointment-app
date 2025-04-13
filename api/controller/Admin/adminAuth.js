@@ -90,6 +90,31 @@ exports.loginAdmin = async (req, res) => {
   }
 };
 
+exports.getAdmin = async (req, res) => {
+  try {
+    const adminId = req.user.id
+
+    const admin = await Admin.findById(adminId).select("-password") // Exclude password field
+
+    if (!admin) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        message: 'Admin not found'
+      })
+    }
+    
+    res.status(StatusCodes.OK).json({
+      message: 'admin data retrieved successfully.',
+      admin
+    })
+  }
+  catch (error) {
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: 'Error fetching admin data',
+      error: error.message
+    })
+  }
+}
+
 exports.logoutAdmin = async (req, res) => {
   try {
     const authHeader = req.get("Authorization");

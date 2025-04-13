@@ -9,6 +9,7 @@ const mongoose = require("mongoose");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 const Socket = require("./socket");
+const cors = require("cors");
 
 const adminRoutes = require("./routes/Admin/index");
 const doctorRoutes = require("./routes/Doctor/index");
@@ -28,15 +29,14 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(bodyParser.json());
 
 // CORS Middleware.
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "OPTIONS, GET, POST, PUT, PATCH, DELETE"
-  );
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  next();
-});
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
 
 // Route registration
 app.use("/admin", adminRoutes);

@@ -56,6 +56,31 @@ exports.loginDoctor = async (req, res) => {
   }
 };
 
+exports.getDoctor = async (req, res) => {
+  try {
+    const doctorId = req.user.id
+
+    const doctor = await Doctor.findById(doctorId).select("-password") // Exclude password field
+
+    if (!doctor) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        message: 'Doctor not found'
+      })
+    }
+    
+    res.status(StatusCodes.OK).json({
+      message: 'doctor data retrieved successfully.',
+      doctor
+    })
+  }
+  catch (error) {
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: 'Error fetching doctor data',
+      error: error.message
+    })
+  }
+}
+
 exports.logoutDoctor = async (req, res) => {
   try {
     const authHeader = req.get("Authorization");
