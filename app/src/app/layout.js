@@ -1,5 +1,6 @@
 import Providers from "@/store/providers";
 import React from "react";
+import "./globals.css";
 
 export const metadata = {
   title: "CareConnect - Connecting you to care, one appointment at a time.",
@@ -11,7 +12,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
+        <div>Logout</div>
         <Providers>{children}</Providers>
+        <div>Footer</div>
       </body>
     </html>
   );

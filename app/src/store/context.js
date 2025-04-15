@@ -1,6 +1,6 @@
 "use client";
 
-import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 import React, { useContext, useEffect, useReducer } from "react";
 
 export const CONSTANTS = {
@@ -49,7 +49,9 @@ export const AppProvider = ({ children }) => {
     `http://localhost:4000/${role}/${endpoint}`;
 
   useEffect(() => {
-    getCurrentUser();
+    if (isAuthenticated()) {
+      getCurrentUser();
+    }
   }, []);
 
   //   Fetch current user info from express backend (via token in localStorage)
@@ -59,7 +61,7 @@ export const AppProvider = ({ children }) => {
       const role = localStorage.getItem("role");
       if (!token || !role) throw new Error("No authenticated token found");
 
-      const res = await fetch(getApiUrl(role, "/me"), {
+      const res = await fetch(getApiUrl(role, "me"), {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -67,6 +69,13 @@ export const AppProvider = ({ children }) => {
 
       if (!res.ok) {
         const data = await res.json();
+
+        if (res.status === 403) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("role");
+          dispatch({ type: CONSTANTS.SIGN_OUT });
+        }
+
         throw new Error(data.message || "Failed to fetch current user");
       }
 
@@ -120,6 +129,7 @@ export const AppProvider = ({ children }) => {
 
   const signinHandler = async (email, password, role) => {
     try {
+      console.log("sign-in route: ", getApiUrl(role, "login"));
       const res = await fetch(getApiUrl(role, "login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -180,9 +190,45 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const isAuthenticated = () => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    if (!token || !role) return false;
+
+    try {
+      const decoded = jwtDecode(token);
+      const currentTime = Date.now() / 1000;
+
+      // Check token expiry
+      if (decoded.exp < currentTime) {
+        // Token expired clean up
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+
+        dispatch({ type: CONSTANTS.SIGN_OUT });
+
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      // Token invalid or error decoding
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+
+      dispatch({ type: CONSTANTS.SIGN_OUT });
+
+      return false;
+    }
+
+    // return Boolean(token && role);
+  };
+
   const value = {
     user: state.user,
     error: state.error,
+    isAuthenticated,
     signupHandler,
     signinHandler,
     signoutHandler,
