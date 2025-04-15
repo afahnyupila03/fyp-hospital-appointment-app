@@ -9,6 +9,7 @@ export const CONSTANTS = {
   SIGN_OUT: "SIGN_OUT",
   ERROR: "ERROR",
   SET_USER: "SET_USER",
+  SET_LOADING: "SET_LOADING",
 };
 
 export const Context = React.createContext();
@@ -16,6 +17,7 @@ export const Context = React.createContext();
 export const defaultAppState = {
   user: null,
   error: null,
+  loading: true,
 };
 
 export const AppReducer = (state, action) => {
@@ -27,6 +29,12 @@ export const AppReducer = (state, action) => {
         ...state,
         user: action.payload.user,
         error: null,
+      };
+
+    case CONSTANTS.SET_LOADING:
+      return {
+        ...state,
+        loading: action.payload.loading,
       };
 
     case CONSTANTS.SIGN_OUT:
@@ -80,7 +88,20 @@ export const AppProvider = ({ children }) => {
       }
 
       const data = await res.json();
-      const user = data.user;
+      let user;
+      switch (role) {
+        case "admin":
+          user = data.admin;
+          break;
+        case "doctor":
+          user = data.doctor;
+          break;
+        case "patient":
+          user = data.patient;
+          break;
+        default:
+          throw new Error("unknown user role");
+      }
 
       dispatch({ type: CONSTANTS.SET_USER, payload: { user } });
 
