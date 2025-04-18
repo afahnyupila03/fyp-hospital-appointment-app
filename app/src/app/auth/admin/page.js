@@ -4,6 +4,7 @@ import { Form, Formik, Field } from "formik";
 import { AppState } from "@/store/context";
 import { useRouter } from "next/navigation";
 import CustomInput from "@/components/CustomInput";
+import { signinSchema, signupSchema } from "@/schema/schema";
 
 export default function AdminAuth() {
   const { signupHandler, signinHandler } = AppState();
@@ -74,92 +75,90 @@ export default function AdminAuth() {
   };
 
   return (
-    <div>
-      <div className="mt-10 mb-10 flex items-center justify-center min-h-screen">
-        <Formik
-          initialValues={{
-            email: "",
-            name: "",
-            password: "",
-          }}
-          onSubmit={existingUser ? handleSignup : handleSignin}
-        >
-          {({ values, handleChange, handleBlur, isSubmitting }) => (
-            <Form className="w-full max-w-md p-4  rounded-lg shadow-xl">
-              <div className="space-y-4">
-                <div className="border-b border-gray-900/10 pb-12">
-                  <h2 className=" font-semibold text-center leading-7 text-2xl text-black bg-gray-800 w-60 rounded-md p-4 justify-center">
-                    {existingUser ? "Create Account" : "Log In"}
-                  </h2>
+    <Formik
+      initialValues={{
+        email: "",
+        name: "",
+        password: "",
+      }}
+      validationSchema={existingUser ? signupSchema : signinSchema}
+      onSubmit={existingUser ? handleSignup : handleSignin}
+    >
+      {({
+        values,
+        handleChange,
+        handleBlur,
+        isSubmitting,
+        errors,
+        touched,
+      }) => (
+        <Form>
+          {existingUser ? "Create Account" : "Log In"}
 
-                  <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-                    {existingUser && (
-                      <CustomInput
-                        onChange={handleChange}
-                        id="name"
-                        name="name"
-                        type="text"
-                        onBlur={handleBlur}
-                        value={values.name}
-                        placeholder="Enter Name"
-                        label="Name"
-                      />
-                    )}
-                    <CustomInput
-                      onChange={handleChange}
-                      id="email"
-                      name="email"
-                      type="email"
-                      onBlur={handleBlur}
-                      value={values.email}
-                      placeholder="Enter email address"
-                      label="Email"
-                    />
-
-                    <CustomInput
-                      onChange={handleChange}
-                      id="password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      onBlur={handleBlur}
-                      value={values.password}
-                      placeholder="Enter Password"
-                      label="Password"
-                      togglePassword={() => setShowPassword(!showPassword)}
-                      showPassword={showPassword}
-                    />
-                  </div>
-
-                  <div className="flex bg-gray-800 w-80 rounded-md p-4 justify-center">
-                    <p className="block text-lg font-medium leading-6  text-red-500">
-                      {existingUser
-                        ? "Already have an account ?"
-                        : "New user ?"}
-                    </p>
-                    <button
-                      className="block ml-2 text-lg font-medium leading-6 text-white"
-                      type="button"
-                      onClick={handleExistingUser}
-                    >
-                      {existingUser ? "Log in" : "Create account"}
-                    </button>
-                  </div>
-
-                  <div className="mt-10">
-                    <button
-                      className="block text-lg font-medium leading-6 rounded-md p-4 mx-4 my-4 bg-gray-800 text-white"
-                      type="submit"
-                      disabled={isSubmitting}
-                    >
-                      {existingUser ? "Create Account" : "Log in"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </Form>
+          {existingUser && (
+            <CustomInput
+              onChange={handleChange}
+              id="name"
+              name="name"
+              type="text"
+              onBlur={handleBlur}
+              value={values.name}
+              placeholder="Enter Name"
+              label="Name"
+              touched={touched}
+              errors={errors}
+            />
           )}
-        </Formik>
-      </div>
-    </div>
+          <CustomInput
+            onChange={handleChange}
+            id="email"
+            name="email"
+            type="email"
+            onBlur={handleBlur}
+            value={values.email}
+            placeholder="Enter email address"
+            label="Email"
+            errors={errors}
+            touched={touched}
+          />
+
+          <CustomInput
+            onChange={handleChange}
+            id="password"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            onBlur={handleBlur}
+            value={values.password}
+            placeholder="Enter Password"
+            label="Password"
+            errors={errors}
+            touched={touched}
+            togglePassword={() => setShowPassword(!showPassword)}
+            showPassword={showPassword}
+          />
+
+          {}
+
+          <p className="block text-lg font-medium leading-6  text-red-500">
+            {existingUser ? "Already have an account ?" : "New user ?"}
+          </p>
+          <button
+            className="block ml-2 text-lg font-medium leading-6 text-white"
+            type="button"
+            onClick={handleExistingUser}
+          >
+            {existingUser ? "Log in" : "Create account"}
+          </button>
+
+          <button
+            className="block text-lg font-medium leading-6 rounded-md p-4 mx-4 my-4 bg-gray-800 text-white"
+            type="submit"
+            disabled={isSubmitting && errors}
+          >
+            {existingUser ? "Create Account" : "Log in"}
+          </button>
+        </Form>
+      )}
+    </Formik>
   );
 }

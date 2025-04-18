@@ -32,6 +32,11 @@ const userSchema = new Schema(
         ref: "Notification",
       },
     ],
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    terminatedAt: Date
   },
   { timestamps: true }
 );

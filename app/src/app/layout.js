@@ -1,6 +1,8 @@
 import Providers from "@/store/providers";
 import React from "react";
 import "./globals.css";
+import { Footer } from "./footer";
+
 
 export const metadata = {
   title: "CareConnect - Connecting you to care, one appointment at a time.",
@@ -14,7 +16,7 @@ export default function RootLayout({ children }) {
       <body>
         <div>Logout</div>
         <Providers>{children}</Providers>
-        <div>Footer</div>
+        <Footer />
       </body>
     </html>
   );

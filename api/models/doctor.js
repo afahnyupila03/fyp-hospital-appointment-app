@@ -53,8 +53,13 @@ const doctorSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Admin",
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    terminatedAt: Date
   },
-  { timestamps: true }  
+  { timestamps: true }
 );
 
 module.exports = mongoose.model("Doctor", doctorSchema);

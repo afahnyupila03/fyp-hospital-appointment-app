@@ -166,11 +166,11 @@ exports.updateDoctor = async (req, res) => {
       doctor.schedules = scheduleDocs;
     }
 
-    const updatedDoctor = await doctor.save();
+    await doctor.save();
 
     res.status(StatusCodes.OK).json({
       message: "Doctor updated successfully",
-      doctor: updatedDoctor,
+      doctor: doctor,
     });
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -180,11 +180,12 @@ exports.updateDoctor = async (req, res) => {
   }
 };
 
-exports.deleteDoctor = async (req, res) => {
+exports.archiveDoctor = async (req, res) => {
   try {
     const { id } = req.params;
+    const { isActive } = req.body;
 
-    const doctor = await Doctor.findByIdAndDelete(id);
+    const doctor = await Doctor.findById(id);
 
     if (!doctor || doctor.role !== "doctor") {
       return res
@@ -192,14 +193,19 @@ exports.deleteDoctor = async (req, res) => {
         .json({ message: "Error, doctor not found" });
     }
 
-    await doctor.deleteOne();
+    // Update doctor isActive and terminatedAt.
+    doctor.isActive = isActive;
+    doctor.terminatedAt = new Date();
+
+    await doctor.save();
 
     res.status(StatusCodes.OK).json({
-      message: "doctor account deleted",
+      message: "doctor account archived successfully",
+      doctor,
     });
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      message: "Error deleting doctor account",
+      message: "Error archiving doctor account",
       error: error.message,
     });
   }
