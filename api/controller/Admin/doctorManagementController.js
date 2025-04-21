@@ -77,6 +77,7 @@ exports.viewDoctors = async (req, res) => {
     const adminId = req.user.id;
     const doctors = await Doctor.find({ role: "doctor" })
       .populate("createdBy", "email name role")
+      .select('-password')
       .sort({ createdAt: -1 });
 
     if (!doctors) {
@@ -100,7 +101,8 @@ exports.viewDoctor = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const doctor = await Doctor.findById({ _id: id, role: "doctor" });
+    const doctor = await Doctor.findById({ _id: id, role: "doctor" })
+    .select('-password');
 
     if (!doctor) {
       return res

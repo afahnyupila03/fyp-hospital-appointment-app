@@ -66,11 +66,13 @@ export default function AdminAuth() {
 
       const user = await signinHandler(email, password, role);
       console.log("SIGNED_IN_USER: ", user);
-      router.replace("/");
+      router.replace("/dashboard/admin");
       actions.resetForm();
     } catch (error) {
-      console.error("SIGNED_IN_USER_ERROR: ", error.message);
+      console.error("SIGNED_IN_USER_ERROR: ", error);
+      
       actions.setSubmitting(false);
+      throw error
     }
   };
 

@@ -19,11 +19,12 @@ export const getDoctorsService = async () => {
       throw new Error("Error fetching doctors from servers");
     }
     const data = await res.json();
+    console.log('doctors service data: ', data)
 
     const doctors = data.doctors;
     console.log("doctors data: ", doctors);
 
-    return doctors;
+    return doctors.map(doctor => doctor);
   } catch (error) {
     console.error("Admin-Doctors: ", error.message);
     throw error;

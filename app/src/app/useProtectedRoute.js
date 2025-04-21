@@ -35,7 +35,6 @@ export default function useProtectedRoute() {
 
         // token expired - clear and redirect based on role
         localStorage.removeItem("token");
-        localStorage.removeItem("role");
 
         router.replace(redirectRoute);
       }
@@ -44,7 +43,6 @@ export default function useProtectedRoute() {
       const redirectRoute = authRoutes[role] || authRoutes["patient"];
 
       localStorage.removeItem("token");
-      localStorage.removeItem("role");
 
       router.replace(redirectRoute);
     }

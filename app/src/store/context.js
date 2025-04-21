@@ -1,6 +1,7 @@
 "use client";
 
 import { jwtDecode } from "jwt-decode";
+import { useRouter } from "next/navigation";
 import React, { useContext, useEffect, useReducer } from "react";
 
 export const CONSTANTS = {
@@ -52,13 +53,20 @@ export const AppReducer = (state, action) => {
 
 export const AppProvider = ({ children }) => {
   const [state, dispatch] = useReducer(AppReducer, defaultAppState);
+  const router = useRouter();
 
   const getApiUrl = (role, endpoint) =>
     `http://localhost:4000/${role}/${endpoint}`;
 
   useEffect(() => {
-    if (isAuthenticated()) {
-      getCurrentUser();
+    const role = localStorage.getItem("role");
+
+    if (!isAuthenticated()) {
+      if (role) {
+        router.replace(`/auth/${role}`);
+      } else {
+        getCurrentUser();
+      }
     }
   }, []);
 
@@ -67,7 +75,7 @@ export const AppProvider = ({ children }) => {
     try {
       const token = localStorage.getItem("token");
       const role = localStorage.getItem("role");
-      if (!token || !role) throw new Error("No authenticated token found");
+      if (!token) throw new Error("No authenticated token found");
 
       const res = await fetch(getApiUrl(role, "me"), {
         headers: {
@@ -80,7 +88,7 @@ export const AppProvider = ({ children }) => {
 
         if (res.status === 403) {
           localStorage.removeItem("token");
-          localStorage.removeItem("role");
+          // localStorage.removeItem("role");
           dispatch({ type: CONSTANTS.SIGN_OUT });
         }
 
@@ -128,17 +136,32 @@ export const AppProvider = ({ children }) => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
 
-      const { token, user } = data;
+      const { token } = data;
+      let { userData } = data;
+      // let userData;
+      switch (role) {
+        case "admin":
+          userData = data.admin;
+          break;
+        case "doctor":
+          userData = data.doctor;
+          break;
+        case "patient":
+          userData = data.patient;
+          break;
+        default:
+          break;
+      }
 
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
 
       dispatch({
         type: CONSTANTS.SIGN_UP,
-        payload: { user },
+        payload: { user: userData },
       });
 
-      return user;
+      return userData;
     } catch (error) {
       dispatch({
         type: CONSTANTS.ERROR,
@@ -157,20 +180,39 @@ export const AppProvider = ({ children }) => {
         body: JSON.stringify({ email, password }),
       });
 
+      console.log("context signin res: ", res);
+
       const data = await res.json();
+      console.log("context data: ", data);
       if (!res.ok) throw new Error(data.message);
 
-      const { token, user } = data;
+      const { token } = data;
+      let { userData } = data;
+      // let userData;
+      switch (role) {
+        case "admin":
+          userData = data.admin;
+          break;
+        case "doctor":
+          userData = data.doctor;
+          break;
+        case "patient":
+          userData = data.patient;
+          break;
+        default:
+          break;
+      }
+      console.log("user data context: ", userData);
 
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
 
       dispatch({
         type: CONSTANTS.SIGN_IN,
-        payload: { user },
+        payload: { user: userData },
       });
 
-      return user;
+      return userData;
     } catch (error) {
       dispatch({
         type: CONSTANTS.ERROR,
@@ -185,14 +227,14 @@ export const AppProvider = ({ children }) => {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("No authenticated token found");
 
-      const res = await fetch(getApiUrl(role, "logout"), {
+      await fetch(getApiUrl(role, "logout"), {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
 
       //   Clear token + role client-side
       localStorage.removeItem("token", token);
-      localStorage.removeItem("role");
+      // localStorage.removeItem("role");
 
       //   Update app state
       dispatch({
@@ -213,9 +255,9 @@ export const AppProvider = ({ children }) => {
 
   const isAuthenticated = () => {
     const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
+    // const role = localStorage.getItem("role");
 
-    if (!token || !role) return false;
+    if (!token) return false;
 
     try {
       const decoded = jwtDecode(token);
@@ -225,9 +267,9 @@ export const AppProvider = ({ children }) => {
       if (decoded.exp < currentTime) {
         // Token expired clean up
         localStorage.removeItem("token");
-        localStorage.removeItem("role");
+        // localStorage.removeItem("role");
 
-        dispatch({ type: CONSTANTS.SIGN_OUT });
+        // dispatch({ type: CONSTANTS.SIGN_OUT });
 
         return false;
       }
@@ -236,9 +278,9 @@ export const AppProvider = ({ children }) => {
     } catch (error) {
       // Token invalid or error decoding
       localStorage.removeItem("token");
-      localStorage.removeItem("role");
+      // localStorage.removeItem("role");
 
-      dispatch({ type: CONSTANTS.SIGN_OUT });
+      // dispatch({ type: CONSTANTS.SIGN_OUT });
 
       return false;
     }

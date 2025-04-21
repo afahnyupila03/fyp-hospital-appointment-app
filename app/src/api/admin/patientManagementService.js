@@ -13,18 +13,25 @@ const getHeaders = () => {
 
 export const getPatientsService = async () => {
   try {
-    const res = await fetch("http://localhost:4000/admin/view-patients");
+    const res = await fetch("http://localhost:4000/admin/view-patients", {
+      headers: getHeaders(),
+    });
+    console.log("patients res: ", res);
     if (!res.ok) throw new Error("error querying patients");
 
     const data = await res.json();
     const patients = data.patients;
+    const count = data.count
+    console.log('service: ', data);
 
-    return patients;
+    return { patients, count };
   } catch (error) {
     console.error("error fetching patients from servers: ", error.message);
     throw error;
   }
 };
+
+export const getAppointmentsService = async () => {}
 
 export const getPatientService = async (id) => {
   try {
@@ -40,7 +47,7 @@ export const getPatientService = async (id) => {
     }
 
     const data = await res.json();
-    const patient = data.patient;
+    const { patient } = data;
 
     return patient;
   } catch (error) {
