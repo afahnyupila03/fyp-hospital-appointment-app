@@ -4,9 +4,7 @@ const { StatusCodes } = require("http-status-codes");
 
 exports.viewPatients = async (req, res) => {
   try {
-    const patients = await User.find()
-    .select('-password')
-    .sort({
+    const patients = await User.find().select("-password").sort({
       createdAt: -1,
     });
 
@@ -19,7 +17,7 @@ exports.viewPatients = async (req, res) => {
     res.status(StatusCodes.OK).json({
       message: "viewing patients",
       patients,
-      count: patients.length
+      count: patients.length,
     });
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -32,7 +30,9 @@ exports.viewPatients = async (req, res) => {
 exports.viewPatient = async (req, res) => {
   try {
     const { id } = req.params;
-    const patient = await User.findById({ _id: id }).select('-password');
+    const patient = await User.findById({ _id: id })
+      .select("-password")
+      .populate("appointments");
     if (!patient) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         message: "Error, patient not found",
@@ -44,6 +44,7 @@ exports.viewPatient = async (req, res) => {
       patient,
     });
   } catch (error) {
+    console.error(error.message)
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: "Error viewing patient account",
       error: error.message,

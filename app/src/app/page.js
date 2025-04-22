@@ -12,7 +12,7 @@ export default function Home() {
   useEffect(() => {
     // If not authenticated, go to patient login. default case.
     if (!isAuthenticated()) {
-      router.replace("/auth/patient");
+      router.replace("/patient/auth");
       return;
     }
 
@@ -21,9 +21,9 @@ export default function Home() {
 
     // Define dashboard routes for each role
     const routes = {
-      admin: "/dashboard/admin",
-      doctor: "/dashboard/doctor",
-      patient: "/dashboard/patient",
+      admin: "/admin/dashboard",
+      doctor: "/doctor/dashboard",
+      patient: "/patient/dashboard",
     };
 
     // If roles exist and route is known, navigate there.
@@ -31,7 +31,7 @@ export default function Home() {
       router.replace(routes[role]);
     } else {
       // fallback if role is missing or unrecognized
-      router.replace("/auth/patient");
+      router.replace("/patient/auth");
     }
   }, []);
 

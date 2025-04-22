@@ -19,12 +19,12 @@ export const getDoctorsService = async () => {
       throw new Error("Error fetching doctors from servers");
     }
     const data = await res.json();
-    console.log('doctors service data: ', data)
+    console.log("doctors service data: ", data);
 
     const doctors = data.doctors;
     console.log("doctors data: ", doctors);
 
-    return doctors.map(doctor => doctor);
+    return doctors.map((doctor) => doctor);
   } catch (error) {
     console.error("Admin-Doctors: ", error.message);
     throw error;
@@ -46,17 +46,14 @@ export const getDoctorService = async (id) => {
     const doctor = data.doctor;
     console.log("get doctor service: ", doctor);
 
-    if (Array.isArray(doctor)) {
+    /* if (Array.isArray(doctor)) {
       return {
         id: doctor._id,
         name: doctor.name,
       };
-    }
+    } */
 
-    return {
-      id: doctor._id,
-      name: doctor.name,
-    };
+    return doctor;
   } catch (error) {
     console.error("doctor query error: ", error.message);
     throw error;

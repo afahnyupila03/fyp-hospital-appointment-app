@@ -14,9 +14,9 @@ export default function useProtectedRoute() {
     const role = localStorage.getItem("role");
 
     const authRoutes = {
-      admin: "/auth/admin",
-      doctor: "/auth/doctor",
-      patient: "/auth/patient",
+      admin: "/admin/auth",
+      doctor: "/doctor/auth",
+      patient: "/patient/auth",
     };
 
     if (!token || !role) {

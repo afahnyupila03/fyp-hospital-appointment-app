@@ -12,6 +12,7 @@ module.exports = (router) => {
   router.get(
     "/view-appointments",
     auth,
+    restrictTo("admin"),
     restrictTo("patient"),
     viewAppointments
   );
@@ -19,6 +20,7 @@ module.exports = (router) => {
     "/view-appointment/:id",
     auth,
     restrictTo("patient"),
+    restrictTo("admin"),
     viewAppointment
   );
   router.post(

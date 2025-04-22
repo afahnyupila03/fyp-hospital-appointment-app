@@ -11,7 +11,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user) {
-      router.push("/auth/admin");
+      router.push("/admin/auth");
     }
   }, [user]);
 

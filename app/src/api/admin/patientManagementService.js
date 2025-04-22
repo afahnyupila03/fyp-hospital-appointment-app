@@ -1,4 +1,8 @@
 const getHeaders = () => {
+  if (typeof window === "undefined") {
+    throw new Error("localStorage is not available on the server.");
+  }
+
   const token = localStorage.getItem("token");
   if (!token)
     throw new Error(
@@ -21,8 +25,8 @@ export const getPatientsService = async () => {
 
     const data = await res.json();
     const patients = data.patients;
-    const count = data.count
-    console.log('service: ', data);
+    const count = data.count;
+    console.log("service: ", data);
 
     return { patients, count };
   } catch (error) {
@@ -31,23 +35,23 @@ export const getPatientsService = async () => {
   }
 };
 
-export const getAppointmentsService = async () => {}
+export const getAppointmentsService = async () => {};
 
 export const getPatientService = async (id) => {
   try {
-    const res = await fetch(
-      `http://localhost:4000/admin/archive-patient/${id}`,
-      {
-        headers: getHeaders(),
-      }
-    );
+    const res = await fetch(`http://localhost:4000/admin/view-patient/${id}`, {
+      headers: getHeaders(),
+    });
+    console.log("patient res: ", res);
 
     if (!res.ok) {
       throw new Error("Error fetching patient profile from server");
     }
 
     const data = await res.json();
-    const { patient } = data;
+    console.log("patient data: ", data);
+    const patient = data.patient;
+    console.log("patients: ", patient);
 
     return patient;
   } catch (error) {
