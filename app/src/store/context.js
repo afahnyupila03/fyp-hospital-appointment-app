@@ -63,7 +63,7 @@ export const AppProvider = ({ children }) => {
 
     if (!isAuthenticated()) {
       if (role) {
-        router.replace(`/auth/${role}`);
+        router.replace(`/${role}/auth`);
       } else {
         getCurrentUser();
       }

@@ -39,7 +39,7 @@ export default function AdminAuth() {
 
       const user = await signupHandler(values, role);
       console.log("SIGNED_UP_USER: ", user);
-      router.replace("/");
+      router.replace("/admin/dashboard");
       actions.resetForm();
     } catch (error) {
       console.error("SIGNED_UP_USER_ERROR: ", error.message);
@@ -66,13 +66,13 @@ export default function AdminAuth() {
 
       const user = await signinHandler(email, password, role);
       console.log("SIGNED_IN_USER: ", user);
-      router.replace("/dashboard/admin");
+      router.replace("/admin/dashboard");
       actions.resetForm();
     } catch (error) {
       console.error("SIGNED_IN_USER_ERROR: ", error);
-      
+
       actions.setSubmitting(false);
-      throw error
+      throw error;
     }
   };
 

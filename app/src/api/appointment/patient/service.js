@@ -44,6 +44,7 @@ export const viewAppointmentService = async (id) => {
       headers: getHeaders(),
     }
   );
+  console.log('patient appointment res: ', res)
   if (!res.ok) throw new Error("Error fetching doctor appointment");
   const data = await res.json();
   const appointment = data.appointment;

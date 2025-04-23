@@ -44,8 +44,11 @@ exports.viewAppointment = async (req, res) => {
     const { id } = req.params;
     const doctorId = req.user.id;
 
-    if (!doctorId)
-      res.status(401).json({ message: "Unauthorized access. Please log in." });
+    if (!doctorId) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized access. Please log in." });
+    }
 
     const appointment = await Appointment.findOne({
       _id: id,
@@ -58,10 +61,11 @@ exports.viewAppointment = async (req, res) => {
       .populate("patientId", "_id email name")
       .populate("notifications");
 
-    if (!appointment)
-      res.status(StatusCodes.BAD_REQUEST).json({
+    if (!appointment) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
         message: "Appointment doesn't exist or access denied",
       });
+    }
 
     res.status(StatusCodes.OK).json({
       message: "doctor appointment retrieved successfully",

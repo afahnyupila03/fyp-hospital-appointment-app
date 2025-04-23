@@ -9,13 +9,13 @@ module.exports = (router) => {
   router.get(
     "/view-appointments",
     auth,
-    restrictTo("doctor"),
+    restrictTo("doctor", "admin"),
     viewAppointments
   );
   router.get(
     "/view-appointment/:id",
     auth,
-    restrictTo("doctor"),
+    restrictTo("doctor", "admin"),
     viewAppointment
   );
   router.put(

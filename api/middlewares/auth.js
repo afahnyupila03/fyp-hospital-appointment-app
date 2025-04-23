@@ -88,18 +88,16 @@ exports.auth = async (req, res, next) => {
   }
 };
 
-exports.restrictTo = (role) => {
+exports.restrictTo = (...roles) => {
   return (req, res, next) => {
     const user = req.user;
 
-    if (!user || user.role !== role) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({
-        message: `${role[0].toUpperCase() + role.slice(1)} privileges required`,
+    if (!user || !roles.includes(user.role)) {
+      return res.status(StatusCodes.FORBIDDEN).json({
+        message: `Access denied, Required role: ${roles.join(" or ")}`,
       });
     }
 
     next();
   };
 };
-
-

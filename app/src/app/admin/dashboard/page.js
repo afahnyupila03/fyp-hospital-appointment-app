@@ -4,24 +4,27 @@
 import useProtectedRoute from "@/app/useProtectedRoute";
 import { UserCard } from "@/components/UserCard";
 import { AppState } from "@/store/context";
+import { AdminMainMenu } from "@/utils/adminNav";
 import dayjs from "dayjs";
 import { useQuery } from "@tanstack/react-query";
 import { CategoryScale } from "chart.js";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import Chart from "chart.js/auto";
 import PieChart from "@/components/Chart";
 import { getPatientsService } from "@/api/admin/patientManagementService";
 import { getDoctorsService } from "@/api/admin/doctorManagementService";
 import Dropdown from "@/components/Dropdown";
 
-
+Chart.register(CategoryScale);
 
 const dropdownActions = (patient) => [
   {
     id: patient._id,
     type: "link",
     label: "View",
-    link: `/dashboard/patient/${patient._id}`,
+    link: `/admin/dashboard/patients/${patient._id}`,
   },
   {
     id: patient._id,
