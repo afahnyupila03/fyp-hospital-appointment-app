@@ -123,3 +123,27 @@ export const archiveDoctorService = async (id, formData) => {
     throw error;
   }
 };
+
+export const unarchiveDoctorService = async (id, formData) => {
+  try {
+    const res = await fetch(
+      `http://localhost:4000/admin/unarchive-doctor/${id}`,
+      {
+        method: "PUT",
+        headers: getHeaders(),
+        body: JSON.stringify(formData),
+      }
+    );
+    if (!res.ok) {
+      throw new Error("failed to unarchive doctor profile");
+    }
+
+    const data = await res.json();
+    const doctor = data.doctor;
+
+    return doctor;
+  } catch (error) {
+    console.error("Error unarchiving doctor: ", error.message);
+    throw error;
+  }
+};

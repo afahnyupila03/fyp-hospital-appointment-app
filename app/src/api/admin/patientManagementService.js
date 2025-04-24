@@ -74,3 +74,22 @@ export const archivePatientService = async (id, data) => {
 
   return patient;
 };
+
+export const unarchivePatientService = async (id, data) => {
+  const res = await fetch(
+    `http://localhost:4000/admin/unarchive-patient/${id}`,
+    {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error("Failed to unarchive patient");
+  }
+
+  const result = await res.json();
+
+  return result.patient;
+};

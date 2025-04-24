@@ -77,7 +77,7 @@ exports.viewDoctors = async (req, res) => {
     const adminId = req.user.id;
     const doctors = await Doctor.find({ role: "doctor" })
       .populate("createdBy", "email name role")
-      .select('-password')
+      .select("-password")
       .sort({ createdAt: -1 });
 
     if (!doctors) {
@@ -102,7 +102,8 @@ exports.viewDoctor = async (req, res) => {
     const { id } = req.params;
 
     const doctor = await Doctor.findById({ _id: id, role: "doctor" })
-    .select('-password');
+      .populate("appointments")
+      .select("-password");
 
     if (!doctor) {
       return res
@@ -198,6 +199,37 @@ exports.archiveDoctor = async (req, res) => {
     // Update doctor isActive and terminatedAt.
     doctor.isActive = isActive;
     doctor.terminatedAt = new Date();
+
+    await doctor.save();
+
+    res.status(StatusCodes.OK).json({
+      message: "doctor account archived successfully",
+      doctor,
+    });
+  } catch (error) {
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: "Error archiving doctor account",
+      error: error.message,
+    });
+  }
+};
+
+exports.unarchiveDoctor = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isActive } = req.body;
+
+    const doctor = await Doctor.findById(id);
+
+    if (!doctor || doctor.role !== "doctor") {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: "Error, doctor not found" });
+    }
+
+    // Update doctor isActive and terminatedAt.
+    doctor.isActive = isActive;
+    doctor.terminatedAt = null;
 
     await doctor.save();
 

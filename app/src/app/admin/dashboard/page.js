@@ -13,9 +13,13 @@ import { useEffect, useState } from "react";
 
 import Chart from "chart.js/auto";
 import PieChart from "@/components/Chart";
-import { getPatientsService } from "@/api/admin/patientManagementService";
+import {
+  archivePatientService,
+  getPatientsService,
+} from "@/api/admin/patientManagementService";
 import { getDoctorsService } from "@/api/admin/doctorManagementService";
 import Dropdown from "@/components/Dropdown";
+import { useArchivePatient } from "@/hooks/useAdmin";
 
 Chart.register(CategoryScale);
 
@@ -33,9 +37,25 @@ const dropdownActions = (patient) => [
   },
 ];
 
+const doctorDropdownActions = (doctor) => [
+  {
+    id: doctor._id,
+    type: "link",
+    label: "View",
+    link: `/admin/dashboard/doctors/${doctor._id}`,
+  },
+  {
+    id: doctor._id,
+    type: "button",
+    label: doctor.isActive ? "Archive" : "Unarchive",
+  },
+];
+
 export default function AdminDashboard() {
   useProtectedRoute();
   const { user } = AppState();
+  console.log("authenticated user data: ", user);
+
   const [chartData, setChartData] = useState(null);
   const [doctorChart, setDoctorChart] = useState(null);
 
@@ -68,6 +88,8 @@ export default function AdminDashboard() {
     refetchInterval: false, // no interval polling
     staleTime: 10 * 60 * 1000, // data stays fresh fr 10 mins
   });
+
+  const { mutateAsync: archivePatient } = useArchivePatient();
 
   useEffect(() => {
     if (data) {
@@ -145,6 +167,19 @@ export default function AdminDashboard() {
   const hasDoctorData = doctorChart?.datasets[0]?.doctorsData?.some(
     (val) => val > 0
   );
+
+  const archivePatientHandler = async (id) => {
+    try {
+      await archivePatient({
+        id,
+        isActive: false,
+      });
+      console.log("success archiving patient");
+    } catch (error) {
+      console.error("error archiving patient: ", error.message);
+    }
+  };
+  const archiveDoctorHandler = async (id) => {};
 
   return (
     <div className="px-10 mx-10 py-10">
@@ -242,9 +277,7 @@ export default function AdminDashboard() {
                   <td>
                     <Dropdown
                       actions={dropdownActions(patient)}
-                      actionHandler={(id, actionLabel) =>
-                        console.log(`Perform ${actionLabel} for patient ${id}`)
-                      }
+                      actionHandler={() => archivePatientHandler(patient._id)}
                     />
                   </td>
                 </tr>
@@ -275,7 +308,7 @@ export default function AdminDashboard() {
                   <td className="border px-4 py-2">{doctor.department}</td>
                   <td>
                     <Dropdown
-                      actions={dropdownActions(doctor)}
+                      actions={doctorDropdownActions(doctor)}
                       actionHandler={(id, actionLabel) =>
                         console.log(`Perform ${actionLabel} for doctor ${id}`)
                       }
