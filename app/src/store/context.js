@@ -65,8 +65,8 @@ export const AppProvider = ({ children }) => {
     if (token) {
       getCurrentUser();
     } else if (role) {
-        router.replace(`/${role}/auth`);
-      }
+      router.replace(`/${role}/auth`);
+    }
 
     // if (!isAuthenticated()) {
     //   if (role) {
@@ -283,16 +283,10 @@ export const AppProvider = ({ children }) => {
 
       return true;
     } catch (error) {
-      // Token invalid or error decoding
+      console.error("Error decoding token: ", error);
       localStorage.removeItem("token");
-      // localStorage.removeItem("role");
-
-      // dispatch({ type: CONSTANTS.SIGN_OUT });
-
       return false;
     }
-
-    // return Boolean(token && role);
   };
 
   const value = {
