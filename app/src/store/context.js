@@ -60,14 +60,21 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     const role = localStorage.getItem("role");
+    const token = localStorage.getItem("token");
 
-    if (!isAuthenticated()) {
-      if (role) {
+    if (token) {
+      getCurrentUser();
+    } else if (role) {
         router.replace(`/${role}/auth`);
-      } else {
-        getCurrentUser();
       }
-    }
+
+    // if (!isAuthenticated()) {
+    //   if (role) {
+    //     router.replace(`/${role}/auth`);
+    //   } else {
+    //     getCurrentUser();
+    //   }
+    // }
   }, []);
 
   //   Fetch current user info from express backend (via token in localStorage)
