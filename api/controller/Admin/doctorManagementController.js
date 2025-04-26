@@ -77,6 +77,9 @@ exports.viewDoctors = async (req, res) => {
     const adminId = req.user.id;
     const doctors = await Doctor.find({ role: "doctor" })
       .populate("createdBy", "email name role")
+      .populate("schedules")
+      .populate("appointments",)
+      // .populate("patientId")
       .select("-password")
       .sort({ createdAt: -1 });
 
@@ -103,6 +106,8 @@ exports.viewDoctor = async (req, res) => {
 
     const doctor = await Doctor.findById({ _id: id, role: "doctor" })
       .populate("appointments")
+      .populate("schedules")
+      // .populate("patientId")
       .select("-password");
 
     if (!doctor) {
@@ -116,6 +121,7 @@ exports.viewDoctor = async (req, res) => {
       doctor,
     });
   } catch (error) {
+    console.error("fetch doctor server error: ", error.message);
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: "Error viewing doctor",
       error: error.message,

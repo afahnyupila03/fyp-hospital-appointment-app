@@ -75,6 +75,7 @@ exports.archivePatient = async (req, res) => {
       patient,
     });
   } catch (error) {
+    console.error('error archive patient: ', error.message)
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: "Error archiving patient profile",
       error: error.message,
@@ -105,6 +106,7 @@ exports.unarchivePatient = async (req, res) => {
       patient,
     });
   } catch (error) {
+    console.error('error un-archive patient: ', error.message)
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: "Error archiving patient profile",
       error: error.message,

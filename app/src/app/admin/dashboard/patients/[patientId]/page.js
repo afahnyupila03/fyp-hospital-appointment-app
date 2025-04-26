@@ -1,7 +1,10 @@
-import {PatientId} from '@/app/admin/dashboard/patients/[patientId]/PatientId'
+"use client";
 
-export default async function PatientIdPageNew({ params }) {
-  const { patientId } = await params;
+import { PatientId } from "@/app/admin/dashboard/patients/[patientId]/PatientId";
+import { use } from "react";
+
+export default function PatientIdPageNew({ params }) {
+  const { patientId } = use(params);
 
   return <PatientId id={patientId} />;
 }

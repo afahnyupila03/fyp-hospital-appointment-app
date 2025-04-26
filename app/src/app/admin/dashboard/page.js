@@ -13,13 +13,17 @@ import { useEffect, useState } from "react";
 
 import Chart from "chart.js/auto";
 import PieChart from "@/components/Chart";
-import {
-  archivePatientService,
-  getPatientsService,
-} from "@/api/admin/patientManagementService";
+
 import { getDoctorsService } from "@/api/admin/doctorManagementService";
 import Dropdown from "@/components/Dropdown";
-import { useArchivePatient } from "@/hooks/useAdmin";
+import {
+  useArchiveDoctor,
+  useArchivePatient,
+  useDoctorsData,
+  usePatientsData,
+  useUnarchiveDoctor,
+  useUnarchivePatient,
+} from "@/hooks/useAdmin";
 
 Chart.register(CategoryScale);
 
@@ -67,29 +71,19 @@ export default function AdminDashboard() {
     refetch,
     isRefetching,
     isLoadingError,
-  } = useQuery({
-    queryKey: ["patients"],
-    queryFn: getPatientsService,
-    refetchOnWindowFocus: false, // prevent refetch on tab/window focus
-    refetchOnMount: false, // prevent refetch when component remounts
-    refetchInterval: false, // no interval polling
-    staleTime: 10 * 60 * 1000, // data stays fresh fr 10 mins
-  });
+  } = usePatientsData();
 
   const {
     data: doctorsData,
     isLoading: loadingDoctors,
     error: doctorsError,
-  } = useQuery({
-    queryKey: ["doctors"],
-    queryFn: getDoctorsService,
-    refetchOnWindowFocus: false, // prevent refetch on tab/window focus
-    refetchOnMount: false, // prevent refetch when component remounts
-    refetchInterval: false, // no interval polling
-    staleTime: 10 * 60 * 1000, // data stays fresh fr 10 mins
-  });
+    refetch: refetchDoctor,
+  } = useDoctorsData();
 
   const { mutateAsync: archivePatient } = useArchivePatient();
+  const { mutateAsync: archiveDoctor } = useArchiveDoctor();
+  const { mutateAsync: unarchiveDoctor } = useUnarchiveDoctor();
+  const { mutateAsync: unarchivePatient } = useUnarchivePatient();
 
   useEffect(() => {
     if (data) {
@@ -175,11 +169,52 @@ export default function AdminDashboard() {
         isActive: false,
       });
       console.log("success archiving patient");
+      await refetch();
     } catch (error) {
       console.error("error archiving patient: ", error.message);
+      throw error;
     }
   };
-  const archiveDoctorHandler = async (id) => {};
+  const archiveDoctorHandler = async (id) => {
+    try {
+      await archiveDoctor({
+        id,
+        isActive: false,
+      });
+
+      await refetchDoctor();
+    } catch (error) {
+      console.error("Error archiving doctor profile: ", error);
+      throw error;
+    }
+  };
+
+  const unarchiveDoctorHandler = async (id) => {
+    try {
+      await unarchiveDoctor({
+        id,
+        isActive: true,
+      });
+
+      await refetchDoctor();
+    } catch (error) {
+      console.error("error unarchiving doctor: ", error);
+      throw error;
+    }
+  };
+  const unarchivePatientHandler = async (id) => {
+    try {
+      await unarchivePatient({
+        id,
+        isActive: true,
+      });
+
+      await refetch();
+    } catch (error) {
+      console.error("error unarchiving patient: ", error);
+      throw error;
+    }
+  };
 
   return (
     <div className="px-10 mx-10 py-10">
@@ -277,7 +312,11 @@ export default function AdminDashboard() {
                   <td>
                     <Dropdown
                       actions={dropdownActions(patient)}
-                      actionHandler={() => archivePatientHandler(patient._id)}
+                      actionHandler={(actionLabel) =>
+                        actionLabel === "Archive"
+                          ? archivePatientHandler(patient._id)
+                          : unarchivePatientHandler(patient._id)
+                      }
                     />
                   </td>
                 </tr>
@@ -309,8 +348,10 @@ export default function AdminDashboard() {
                   <td>
                     <Dropdown
                       actions={doctorDropdownActions(doctor)}
-                      actionHandler={(id, actionLabel) =>
-                        console.log(`Perform ${actionLabel} for doctor ${id}`)
+                      actionHandler={(actionLabel) =>
+                        actionLabel === "Archive"
+                          ? archiveDoctorHandler(doctor._id)
+                          : unarchiveDoctorHandler(doctor._id)
                       }
                     />
                   </td>

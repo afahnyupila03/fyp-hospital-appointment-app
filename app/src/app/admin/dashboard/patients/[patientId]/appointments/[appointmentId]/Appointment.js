@@ -1,18 +1,10 @@
 "use client";
 
-import { viewAppointmentService } from "@/api/appointment/patient/service";
-import { useQuery } from "@tanstack/react-query";
+import { usePatientAppointment } from "@/hooks/usePatient";
 
 export const Appointment = ({ id }) => {
-  const { data, isLoading, isError, error, refetch, isRefetchError } = useQuery(
-    {
-      queryKey: ["appointment", id],
-      queryFn: () => viewAppointmentService(id),
-      enabled: !!id,
-      refetchInterval: false,
-      staleTime: 10 * 60 * 1000,
-    }
-  );
+  const { data, isLoading, isError, error, refetch, isRefetchError } =
+    usePatientAppointment(id);
 
   if (isLoading) return <p>Loading appointment details</p>;
 

@@ -1,16 +1,10 @@
 "use client";
 
-import { getPatientService } from "@/api/admin/patientManagementService";
-import { useQuery } from "@tanstack/react-query";
+import { usePatientData } from "@/hooks/useAdmin";
 import Link from "next/link";
 
 export const PatientId = ({ id }) => {
-  const { data, isLoading, error, isError } = useQuery({
-    queryKey: ["patient", id],
-    queryFn: () => getPatientService(id),
-    enabled: !!id,
-    staleTime: 10 * 60 * 1000,
-  });
+  const { data, isLoading, error, isError } = usePatientData(id)
 
   if (isLoading) return <p>Loading patient data</p>;
   if (isError) return <p>Error loading patient data, {error.message}</p>;

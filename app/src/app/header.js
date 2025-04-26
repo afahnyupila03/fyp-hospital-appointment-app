@@ -12,15 +12,15 @@ const userLinks = (user) => {
       return [
         {
           name: "Create Doctor",
-          href: "dashboard/admin/create",
+          href: "dashboard/create",
         },
         {
           name: "Doctors",
-          href: "dashboard/admin/doctors",
+          href: "dashboard/doctors",
         },
         {
           name: "Patients",
-          href: "dashboard/admin/patients",
+          href: "dashboard/patients",
         },
       ];
     } else if (user.role === "doctor") {
@@ -46,13 +46,13 @@ export const Header = () => {
     let url;
     switch (role) {
       case "admin":
-        url = "/dashboard/admin";
+        url = "/admin/dashboard";
         break;
       case "doctor":
-        url = "/dashboard/doctor";
+        url = "/doctor/dashboard";
         break;
       case "patient":
-        url = "/dashboard/patient";
+        url = "/patient/dashboard";
         break;
       default:
         url = undefined;

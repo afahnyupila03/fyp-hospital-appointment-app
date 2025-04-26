@@ -1,16 +1,11 @@
 "use client";
 
-import { getDoctorService } from "@/api/admin/doctorManagementService";
-import { useQuery } from "@tanstack/react-query";
+import { useDoctorData } from "@/hooks/useAdmin";
+
 import Link from "next/link";
 
 export const DoctorId = ({ id }) => {
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["doctor", id],
-    queryFn: () => getDoctorService(id),
-    enabled: !!id,
-    staleTime: 10 * 60 * 1000,
-  });
+  const { data, isLoading, isError, error } = useDoctorData(id);
 
   if (isLoading) return <p>Loading doctor profile</p>;
   if (isError) return <p>Error loading doctor profile: {error.message}</p>;
@@ -39,24 +34,34 @@ export const DoctorId = ({ id }) => {
         <h3>Appointments</h3>
         <p>Total booked appointments: {appointmentCounter}</p>
 
-        {appointments.map((appointment) => (
-          <div key={appointment._id}>
-            <p>Patient name: {appointment?.patientId?.name}</p>
-            <p>Patient email: {appointment?.patientId?.email}</p>
-            <p>Appointment reason: {appointment.reason}</p>
-            <p>Appointment note: {appointment.notes}</p>
-            <p>
-              Appointment day and time:
-              {`${appointment.date} - ${appointment.timeSlot}`}
-            </p>
-            <p>Appointment status: {appointment.status}</p>
-            <Link
-              href={`/admin/dashboard/doctors/${id}/appointments/${appointment._id}`}
-            >
-              View
-            </Link>
-          </div>
-        ))}
+        {appointments.map((appointment) => {
+          const {
+            _id,
+            patientId: { name, email, reason, notes },
+            status,
+            timeSlot,
+            date,
+          } = appointment;
+
+          console.log("patientId appointment: ", appointment);
+
+          return (
+            <div key={_id}>
+              <p>Patient name: {name}</p>
+              <p>Patient email: {email}</p>
+              <p>Appointment reason: {reason}</p>
+              <p>Appointment note: {notes}</p>
+              <p>
+                Appointment day and time:
+                {`${date} - ${timeSlot}`}
+              </p>
+              <p>Appointment status: {status}</p>
+              <Link href={`/admin/dashboard/doctors/${id}/appointments/${_id}`}>
+                View
+              </Link>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
