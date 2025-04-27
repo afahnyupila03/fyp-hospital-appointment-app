@@ -1,19 +1,22 @@
 "use client";
 
 import CustomInput from "@/components/CustomInput";
-import { useCreateDoctor, useDoctorsMeta } from "@/hooks/useAdmin";
+import {
+  useCreateDoctor,
+  useDoctorData,
+  useDoctorsMeta,
+} from "@/hooks/useAdmin";
 import { createDoctorSchema } from "@/schema/schema";
 import { Formik, Form, FieldArray } from "formik";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, useParams } from "next/navigation";
 
 export default function CreateDoctorPage() {
-  const { data, isLoading } = useDoctorsMeta();
   const router = useRouter();
+
+  const { data } = useDoctorsMeta();
 
   const specialization = data?.specialties;
   const department = data?.departments;
-
-  const { mutateAsync: createDoctor } = useCreateDoctor();
 
   const initialValues = {
     name: "",
@@ -28,9 +31,12 @@ export default function CreateDoctorPage() {
       },
     ],
   };
+
+  const { mutateAsync: createDoctor } = useCreateDoctor();
+
   const createDoctorHandler = async (values, actions) => {
     try {
-      console.log('creating')
+      console.log("creating");
       await createDoctor(values);
       console.log("success create doctor profile");
       router.push("/admin/dashboard/doctors");

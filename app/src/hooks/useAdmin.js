@@ -120,7 +120,7 @@ export const useUpdateDoctor = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id, updatedData) => updateDoctorService(id, updatedData),
+    mutationFn: ({id, updatedData}) => updateDoctorService(id, updatedData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["doctors"] });
     },

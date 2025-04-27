@@ -40,7 +40,7 @@ const dropdownActions = (patient) => [
   },
 ];
 
-const doctorDropdownActions = (doctor) => [
+const doctorDropdownActions = (doctor,) => [
   {
     id: doctor._id,
     type: "link",
@@ -49,9 +49,9 @@ const doctorDropdownActions = (doctor) => [
   },
   {
     id: doctor._id,
-    type: 'link',
-    label: 'Update',
-    
+    type: "link",
+    label: "Update",
+    link: `/admin/dashboard/doctors/create-doctor/${doctor._id}?editing=true`,
   },
   {
     id: doctor._id,

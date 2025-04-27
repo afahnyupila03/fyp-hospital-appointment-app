@@ -62,16 +62,18 @@ export const getDoctorService = async (id) => {
 
 export const updateDoctorService = async (id, updateData) => {
   try {
-    const res = await fetch(`http://localhost:4000/admin/doctor/${id}`, {
+    const res = await fetch(`http://localhost:4000/admin/update-doctor/${id}`, {
       method: "PUT",
       headers: getHeaders(),
       body: JSON.stringify(updateData),
     });
 
-    if (!res.ok) {
-      throw new Error("Error updating doctor profile");
-    }
     const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message);
+    }
+
     const doctor = data.doctor;
     return doctor;
   } catch (error) {
