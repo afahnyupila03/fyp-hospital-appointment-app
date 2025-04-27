@@ -12,15 +12,15 @@ const userLinks = (user) => {
       return [
         {
           name: "Create Doctor",
-          href: "dashboard/create",
+          href: "/admin/dashboard/doctors/create-doctor",
         },
         {
           name: "Doctors",
-          href: "dashboard/doctors",
+          href: "/admin/dashboard/doctors",
         },
         {
           name: "Patients",
-          href: "dashboard/patients",
+          href: "/admin/dashboard/patients",
         },
       ];
     } else if (user.role === "doctor") {

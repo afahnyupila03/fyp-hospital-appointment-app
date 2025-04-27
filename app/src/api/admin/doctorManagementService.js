@@ -87,15 +87,17 @@ export const createDoctorService = async (formData) => {
       headers: getHeaders(),
       body: JSON.stringify(formData),
     });
-    if (!res.ok) {
-      throw new Error("error creating doctor profile");
-    }
+
     const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message);
+    }
 
     console.log("created doctor profile: ", data.doctor);
     return data.doctor;
   } catch (error) {
-    console.error("Error creating doctor profile: ", error.message);
+    console.error("Error creating doctor profile: ", error);
     throw error;
   }
 };

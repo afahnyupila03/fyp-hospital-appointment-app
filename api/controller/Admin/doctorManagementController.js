@@ -60,11 +60,17 @@ exports.createDoctor = async (req, res) => {
     savedDoctor.schedules = scheduleEntries;
     await savedDoctor.save();
 
+    // Refetch the doctor properly with populated schedules.
+    const updatedDoctor = await Doctor.findById(savedDoctor._id).populate(
+      "schedules"
+    );
+
     res.status(StatusCodes.CREATED).json({
       message: "doctor account created",
-      savedDoctor,
+      doctor: updatedDoctor,
     });
   } catch (error) {
+    console.log("error creating doctor: ", error.message);
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: "Error creating doctor account",
       error: error.message,
@@ -78,7 +84,7 @@ exports.viewDoctors = async (req, res) => {
     const doctors = await Doctor.find({ role: "doctor" })
       .populate("createdBy", "email name role")
       .populate("schedules")
-      .populate("appointments",)
+      .populate("appointments")
       // .populate("patientId")
       .select("-password")
       .sort({ createdAt: -1 });

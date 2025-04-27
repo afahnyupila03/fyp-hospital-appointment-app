@@ -13,6 +13,35 @@ import {
   unarchivePatientService,
 } from "@/api/admin/patientManagementService";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
+
+const fetchDoctorMeta = async () => {
+  const res = await fetch("http://localhost:4000/api/meta/doctor-meta");
+  if (!res.ok) {
+    throw new Error("Error fetching doctor specialties and departments");
+  }
+  const { departments, specialties } = await res.json();
+
+  console.log(`Doctor spec: ${specialties} and departments: ${departments}`);
+
+  return { departments, specialties };
+};
+
+export const useDoctorsMeta = () => {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    queryClient.prefetchQuery({
+      queryKey: ["doctor-meta"],
+      queryFn: fetchDoctorMeta,
+    });
+  }, [queryClient]);
+
+  return useQuery({
+    queryKey: ["doctor-meta"],
+    queryFn: fetchDoctorMeta,
+  });
+};
 
 export const usePatientsData = () => {
   return useQuery({
@@ -80,9 +109,9 @@ export const useCreateDoctor = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ data }) => createDoctorService(data),
+    mutationFn: (formData) => createDoctorService(formData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["create-doctor"] });
+      queryClient.invalidateQueries({ queryKey: ["doctors"] });
     },
   });
 };

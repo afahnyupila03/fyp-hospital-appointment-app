@@ -13,6 +13,7 @@ const cors = require("cors");
 
 const adminRoutes = require("./routes/Admin/index");
 const doctorRoutes = require("./routes/Doctor/index");
+const doctorMetaRoute = require('./routes/meta')
 const patientRoutes = require("./routes/Patient/index");
 
 const app = express();
@@ -39,6 +40,7 @@ app.use(
 );
 
 // Route registration
+app.use('/api/meta', doctorMetaRoute)
 app.use("/admin", adminRoutes);
 app.use("/doctor", doctorRoutes);
 app.use("/patient", patientRoutes);
