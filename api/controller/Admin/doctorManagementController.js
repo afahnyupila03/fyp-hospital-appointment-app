@@ -60,14 +60,9 @@ exports.createDoctor = async (req, res) => {
     savedDoctor.schedules = scheduleEntries;
     await savedDoctor.save();
 
-    // Refetch the doctor properly with populated schedules.
-    const updatedDoctor = await Doctor.findById(savedDoctor._id).populate(
-      "schedules"
-    );
-
     res.status(StatusCodes.CREATED).json({
       message: "doctor account created",
-      doctor: updatedDoctor,
+      doctor: savedDoctor,
     });
   } catch (error) {
     console.log("error creating doctor: ", error.message);

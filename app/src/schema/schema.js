@@ -67,3 +67,5 @@ export const createDoctorSchema = () =>
     day: yup.string().trim().required("Day is required"),
     time: yup.string().trim().required("Time is required."),
   });
+
+  export const updateDoctorSchema = () => yup.object().shape({})

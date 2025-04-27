@@ -14,7 +14,6 @@ import { useEffect, useState } from "react";
 import Chart from "chart.js/auto";
 import PieChart from "@/components/Chart";
 
-import { getDoctorsService } from "@/api/admin/doctorManagementService";
 import Dropdown from "@/components/Dropdown";
 import {
   useArchiveDoctor,
@@ -47,6 +46,12 @@ const doctorDropdownActions = (doctor) => [
     type: "link",
     label: "View",
     link: `/admin/dashboard/doctors/${doctor._id}`,
+  },
+  {
+    id: doctor._id,
+    type: 'link',
+    label: 'Update',
+    
   },
   {
     id: doctor._id,

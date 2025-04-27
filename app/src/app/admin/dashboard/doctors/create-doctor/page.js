@@ -30,6 +30,7 @@ export default function CreateDoctorPage() {
   };
   const createDoctorHandler = async (values, actions) => {
     try {
+      console.log('creating')
       await createDoctor(values);
       console.log("success create doctor profile");
       router.push("/admin/dashboard/doctors");
@@ -48,7 +49,7 @@ export default function CreateDoctorPage() {
 
       <Formik
         initialValues={initialValues}
-        validationSchema={createDoctorSchema}
+        // validationSchema={createDoctorSchema}
         onSubmit={createDoctorHandler}
       >
         {({
