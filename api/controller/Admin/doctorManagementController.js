@@ -1,4 +1,5 @@
 const Doctor = require("../../models/doctor");
+const Schedule = require("../../models/schedule");
 
 const bcrypt = require("bcrypt");
 const { StatusCodes } = require("http-status-codes");
@@ -6,7 +7,14 @@ const { StatusCodes } = require("http-status-codes");
 exports.createDoctor = async (req, res) => {
   try {
     const user = req.user;
-    const { name, email, password, specialization, department } = req.body;
+    const { name, email, password, specialization, department, schedule } =
+      req.body;
+
+    if (!Array.isArray(schedule) || schedule.length === 0) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: "At least one schedule entry (date and time) is required",
+      });
+    }
 
     const existingUser = await Doctor.findOne({ email: email });
     if (existingUser) {
@@ -17,7 +25,8 @@ exports.createDoctor = async (req, res) => {
 
     const hashPassword = await bcrypt.hash(password, 12);
 
-    const doctor = new User({
+    // STEP_1 Create doctor without schedule
+    const doctor = new Doctor({
       name,
       email,
       password: hashPassword,
@@ -26,13 +35,37 @@ exports.createDoctor = async (req, res) => {
       createdBy: user.id,
     });
 
-    const result = await doctor.save();
+    const savedDoctor = await doctor.save();
+
+    // STEP_2 create the schedule entries and attach to doctor
+    const scheduleEntries = [];
+    for (const entry of schedule) {
+      const { day, times } = entry;
+      if (!day || !Array.isArray(times) || times.length === 0) {
+        continue; // Skip invalid entries
+      }
+
+      for (const time of times) {
+        const scheduleDoc = new Schedule({
+          doctorId: savedDoctor._id,
+          day,
+          time,
+        });
+        const savedSchedule = await scheduleDoc.save();
+        scheduleEntries.push(savedSchedule._id);
+      }
+    }
+
+    // STEP_3 update te doctor with schedule references.
+    savedDoctor.schedules = scheduleEntries;
+    await savedDoctor.save();
 
     res.status(StatusCodes.CREATED).json({
       message: "doctor account created",
-      result,
+      doctor: savedDoctor,
     });
   } catch (error) {
+    console.log("error creating doctor: ", error.message);
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: "Error creating doctor account",
       error: error.message,
@@ -45,6 +78,10 @@ exports.viewDoctors = async (req, res) => {
     const adminId = req.user.id;
     const doctors = await Doctor.find({ role: "doctor" })
       .populate("createdBy", "email name role")
+      .populate("schedules")
+      .populate("appointments")
+      // .populate("patientId")
+      .select("-password")
       .sort({ createdAt: -1 });
 
     if (!doctors) {
@@ -68,7 +105,11 @@ exports.viewDoctor = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const doctor = await Doctor.findById({ _id: id, role: "doctor" });
+    const doctor = await Doctor.findById({ _id: id, role: "doctor" })
+      .populate("appointments")
+      .populate("schedules")
+      // .populate("patientId")
+      .select("-password");
 
     if (!doctor) {
       return res
@@ -81,6 +122,7 @@ exports.viewDoctor = async (req, res) => {
       doctor,
     });
   } catch (error) {
+    console.error("fetch doctor server error: ", error.message);
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: "Error viewing doctor",
       error: error.message,
@@ -91,7 +133,7 @@ exports.viewDoctor = async (req, res) => {
 exports.updateDoctor = async (req, res) => {
   try {
     const { id } = req.params;
-    const { email, name, specialization, department } = req.body;
+    const { email, name, specialization, department, schedule } = req.body;
 
     const doctor = await Doctor.findById(id);
 
@@ -101,16 +143,44 @@ exports.updateDoctor = async (req, res) => {
       });
     }
 
+    // Update basic info
     doctor.email = email || doctor.email;
     doctor.name = name || doctor.name;
     doctor.specialization = specialization || doctor.specialization;
     doctor.department = department || doctor.department;
 
-    const updatedDoctor = await doctor.save();
+    // If schedule is provided, replace it
+    if (Array.isArray(schedule) && schedule.length > 0) {
+      // Delete existing schedules
+      await Schedule.deleteMany({ doctor: doctor._id });
 
-    res.status(StatusCodes.CREATED).json({
-      message: "doctor update success",
-      updatedDoctor,
+      // Create new schedule documents
+      const scheduleDocs = [];
+
+      for (const entry of schedule) {
+        const { day, times } = entry;
+        if (!day || !Array.isArray(times) || times.length === 0) continue;
+
+        for (const time of times) {
+          const newSchedule = new Schedule({
+            doctor: doctor._id,
+            day,
+            time,
+          });
+          const saved = await newSchedule.save();
+          scheduleDocs.push(saved._id);
+        }
+      }
+
+      // Attach updated schedule IDs to the doctor
+      doctor.schedules = scheduleDocs;
+    }
+
+    await doctor.save();
+
+    res.status(StatusCodes.OK).json({
+      message: "Doctor updated successfully",
+      doctor: doctor,
     });
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -120,11 +190,12 @@ exports.updateDoctor = async (req, res) => {
   }
 };
 
-exports.deleteDoctor = async (req, res) => {
+exports.archiveDoctor = async (req, res) => {
   try {
     const { id } = req.params;
+    const { isActive } = req.body;
 
-    const doctor = await User.findByIdAndDelete(id);
+    const doctor = await Doctor.findById(id);
 
     if (!doctor || doctor.role !== "doctor") {
       return res
@@ -132,14 +203,50 @@ exports.deleteDoctor = async (req, res) => {
         .json({ message: "Error, doctor not found" });
     }
 
-    await doctor.deleteOne();
+    // Update doctor isActive and terminatedAt.
+    doctor.isActive = isActive;
+    doctor.terminatedAt = new Date();
+
+    await doctor.save();
 
     res.status(StatusCodes.OK).json({
-      message: "doctor account deleted",
+      message: "doctor account archived successfully",
+      doctor,
     });
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      message: "Error deleting doctor account",
+      message: "Error archiving doctor account",
+      error: error.message,
+    });
+  }
+};
+
+exports.unarchiveDoctor = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isActive } = req.body;
+
+    const doctor = await Doctor.findById(id);
+
+    if (!doctor || doctor.role !== "doctor") {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: "Error, doctor not found" });
+    }
+
+    // Update doctor isActive and terminatedAt.
+    doctor.isActive = isActive;
+    doctor.terminatedAt = null;
+
+    await doctor.save();
+
+    res.status(StatusCodes.OK).json({
+      message: "doctor account archived successfully",
+      doctor,
+    });
+  } catch (error) {
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: "Error archiving doctor account",
       error: error.message,
     });
   }

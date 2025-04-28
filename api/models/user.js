@@ -25,8 +25,18 @@ const userSchema = new Schema(
         type: Schema.Types.ObjectId,
         ref: "Appointment",
       },
-    ]
-    
+    ],
+    notifications: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Notification",
+      },
+    ],
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    terminatedAt: Date
   },
   { timestamps: true }
 );

@@ -3,6 +3,7 @@ const { StatusCodes } = require("http-status-codes");
 const Appointment = require("../../models/appointment");
 const User = require("../../models/user");
 const Doctor = require("../../models/doctor");
+const Notification = require("../../models/notification");
 
 exports.viewAppointments = async (req, res) => {
   try {
@@ -36,10 +37,13 @@ exports.viewAppointment = async (req, res) => {
     const user = req.user;
     const { id } = req.params;
 
-    const appointment = await Appointment.findOne({
-      _id: id,
-      patientId: user.id,
-    })
+    let query = {_id: id}
+
+    if (user.role === 'patient') {
+      query.patientId = user.id
+    }
+
+    const appointment = await Appointment.findOne(query)
       .populate("doctorId", "email name specialization department")
       .populate("patientId", "email name reason notes");
 
@@ -74,7 +78,7 @@ exports.createAppointment = async (req, res) => {
     }
     const doctorId = doc._id;
 
-    const user = User.findOne({ _id: patientId });
+    const user = await User.findOne({ _id: patientId });
 
     if (!user) {
       return res.status(StatusCodes.BAD_REQUEST).json({
@@ -92,13 +96,11 @@ exports.createAppointment = async (req, res) => {
       notes,
     });
 
+    // Push appointment to both patient and doctor.
     user.appointments.push(createdAppointment);
     doc.appointments.push(createdAppointment);
 
-    await user.save();
-    await doc.save();
-
-    // create notification.
+    // create notification and push notification.
     const notification = new Notification({
       sender: patientId,
       receiver: doctorId,
@@ -106,9 +108,17 @@ exports.createAppointment = async (req, res) => {
       message: "Appointment request sent successfully.",
       appointment: createdAppointment._id,
     });
+
     const notify = await notification.save();
 
-    // to created appointment to db.
+    // Push notifications ref to patient, doctor and appointment.
+    user.notifications.push(notify._id);
+    doc.notifications.push(notify._id);
+    createdAppointment.notifications.push(notify._id);
+
+    // save created appointment to db.
+    await user.save();
+    await doc.save();
     const data = await createdAppointment.save();
 
     res.status(StatusCodes.CREATED).json({
@@ -130,15 +140,18 @@ exports.updateAppointment = async (req, res) => {
     const { doctor, date, timeSlot, reason, notes } = req.body;
     const { id } = req.params;
 
-    const appointment = await Appointment.findById(id);
+    const appointment = await Appointment.findById(id).populate(
+      "notifications",
+      "sender receiver type message appointment status"
+    );
     if (!appointment) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         message: "appointment does not exist",
       });
     }
 
-    // If new doctor selected, update the doctorId and update the doctor model ref.
-    let newDoctor = null;
+    // Handle doctor change
+    let newDoctor;
     if (doctor) {
       newDoctor = await Doctor.findOne({ name: doctor });
       if (!newDoctor) {
@@ -150,14 +163,11 @@ exports.updateAppointment = async (req, res) => {
       const oldDoctorId = appointment.doctorId.toString();
       const newDoctorId = newDoctor._id.toString();
 
-      // Only update if doctor changed
       if (oldDoctorId !== newDoctorId) {
-        // Remove from old doctor.
         await Doctor.findByIdAndUpdate(oldDoctorId, {
           $pull: { appointments: appointment._id },
         });
 
-        // Add to new doctor
         await Doctor.findByIdAndUpdate(newDoctorId, {
           $addToSet: { appointments: appointment._id },
         });
@@ -172,16 +182,29 @@ exports.updateAppointment = async (req, res) => {
     if (reason) appointment.reason = reason;
     if (notes) appointment.notes = notes;
 
-    const updatedAppointment = appointment.save();
+    const updatedAppointment = await appointment.save();
 
+    // Create and push notification.
     const notification = new Notification({
       sender: user.id,
       receiver: appointment.doctorId,
-      type: "appointment_request_update",
-      message: "Appointment request updated.",
+      type: newDoctor ? "appointment_request" : "appointment_request_update",
+      message: newDoctor
+        ? "Appointment request"
+        : "Appointment request update.",
       appointment: appointment._id,
     });
     const notify = await notification.save();
+
+    await User.findByIdAndUpdate(user.id, {
+      $addToSet: { notifications: notify._id },
+    });
+    await Doctor.findByIdAndUpdate(appointment.doctorId, {
+      $addToSet: { notification: notify._id },
+    });
+
+    appointment.notifications.push(notify._id);
+    await appointment.save();
 
     res.status(StatusCodes.CREATED).json({
       message: "appointment updated",
@@ -191,6 +214,52 @@ exports.updateAppointment = async (req, res) => {
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: "Error updating patient appointment",
+      error: error.message,
+    });
+  }
+};
+
+exports.viewDoctors = async (req, res) => {
+  try {
+    const doctors = await Doctor.find().populate();
+
+    if (!doctors || doctors.length === 0) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        message: "no doctors found in db.",
+      });
+    }
+
+    res.status(StatusCodes.OK).json({
+      message: "patient viewing all doctors",
+      doctors,
+    });
+  } catch (error) {
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: "Error finding doctors",
+      error: error.message,
+    });
+  }
+};
+
+exports.viewDoctor = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const doctor = await Doctor.findOne({ _id: id });
+
+    if (!doctor) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        message: "doctor profile not found",
+      });
+    }
+
+    res.status(StatusCodes.OK).json({
+      message: "patient doctor profile",
+      doctor,
+    });
+  } catch (error) {
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: "error viewing doctor profile",
       error: error.message,
     });
   }

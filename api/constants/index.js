@@ -30,6 +30,7 @@ exports.specialties = [
 exports.departments = [
   "anesthesiology",
   "cardiology",
+  "heart",
   "dermatology",
   "endocrinology",
   "gastroenterology",
@@ -57,6 +58,7 @@ exports.departments = [
 ];
 
 exports.TIME_SLOTS = [
+  // 30-minute slots
   "08:00 AM - 08:30 AM",
   "08:30 AM - 09:00 AM",
   "09:00 AM - 09:30 AM",
@@ -81,4 +83,16 @@ exports.TIME_SLOTS = [
   "06:30 PM - 07:00 PM",
   "07:00 PM - 07:30 PM",
   "07:30 PM - 08:00 PM",
+  "08:00 PM - 08:30 PM",
+  "08:30 PM - 09:00 PM",
+  "09:00 PM - 09:30 PM",
+
+  // Larger ranges for convenience
+  "08:00 AM - 12:00 PM",
+  "02:00 PM - 06:00 PM",
+  "08:00 PM - 09:30 PM",
+  "04:00 PM - 05:00 PM",
+  "10:00 AM - 12:00 PM",
+  "01:00 PM - 03:00 PM",
+  "04:00 PM - 08:00 PM",
 ];
