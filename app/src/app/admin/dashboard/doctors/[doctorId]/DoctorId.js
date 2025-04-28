@@ -1,20 +1,54 @@
 "use client";
 
-import { useDoctorData } from "@/hooks/useAdmin";
+import {
+  useArchiveDoctor,
+  useDoctorData,
+  useUnarchiveDoctor,
+} from "@/hooks/useAdmin";
 
 import Link from "next/link";
 
 export const DoctorId = ({ id }) => {
   const { data, isLoading, isError, error } = useDoctorData(id);
 
+  const { mutateAsync: archiveDoctor } = useArchiveDoctor();
+  const { mutateAsync: unarchiveDoctor } = useUnarchiveDoctor();
+
   if (isLoading) return <p>Loading doctor profile</p>;
   if (isError) return <p>Error loading doctor profile: {error.message}</p>;
 
-  const { name, email, specialization, department, isActive, appointments } =
-    data;
+  const {
+    _id,
+    name,
+    email,
+    specialization,
+    department,
+    isActive,
+    appointments,
+  } = data;
 
   const appointmentCounter = appointments.length;
   if (appointmentCounter === 0) return <p>No booked appointments.</p>;
+
+  const archiveDoctorHandler = async (id) => {
+    try {
+      await archiveDoctor({ id, isActive: false });
+      window.location.reload();
+    } catch (error) {
+      console.error("archive handler error", error);
+      throw error;
+    }
+  };
+
+  const unarchiveDoctorHandler = async (id) => {
+    try {
+      await unarchiveDoctor({ id, isActive: true });
+      window.location.reload();
+    } catch (error) {
+      console.error("error un-archiving doctor: ", error);
+      throw error;
+    }
+  };
 
   return (
     <div>
@@ -29,6 +63,20 @@ export const DoctorId = ({ id }) => {
         <p>Schedules: remember to include doctor schedule(s)</p>
       </div>
       <p>Account status: {isActive}</p>
+
+      <button
+        type="button"
+        onClick={
+          isActive === true
+            ? () => archiveDoctorHandler(_id)
+            : () => unarchiveDoctorHandler(_id)
+        }
+      >
+        {isActive === true ? "Archive" : "Unarchive"}
+      </button>
+      <Link href={`/admin/dashboard/doctors/create-doctor/${_id}`}>
+        Update profile
+      </Link>
 
       <div>
         <h3>Appointments</h3>
