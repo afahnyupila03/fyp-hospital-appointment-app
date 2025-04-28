@@ -37,10 +37,13 @@ exports.viewAppointment = async (req, res) => {
     const user = req.user;
     const { id } = req.params;
 
-    const appointment = await Appointment.findOne({
-      _id: id,
-      patientId: user.id,
-    })
+    let query = {_id: id}
+
+    if (user.role === 'patient') {
+      query.patientId = user.id
+    }
+
+    const appointment = await Appointment.findOne(query)
       .populate("doctorId", "email name specialization department")
       .populate("patientId", "email name reason notes");
 

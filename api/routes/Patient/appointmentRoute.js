@@ -12,13 +12,13 @@ module.exports = (router) => {
   router.get(
     "/view-appointments",
     auth,
-    restrictTo("patient"),
+    restrictTo("admin", "patient"),
     viewAppointments
   );
   router.get(
     "/view-appointment/:id",
     auth,
-    restrictTo("patient"),
+    restrictTo("admin", "patient"),
     viewAppointment
   );
   router.post(

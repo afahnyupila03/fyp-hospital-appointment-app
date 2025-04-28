@@ -24,7 +24,6 @@ const scheduleSchema = new Schema({
   },
   time: {
     type: String,
-    enum: TIME_SLOTS,
     required: true,
   },
 });

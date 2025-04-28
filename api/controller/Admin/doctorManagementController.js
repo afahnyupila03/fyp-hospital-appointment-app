@@ -62,9 +62,10 @@ exports.createDoctor = async (req, res) => {
 
     res.status(StatusCodes.CREATED).json({
       message: "doctor account created",
-      savedDoctor,
+      doctor: savedDoctor,
     });
   } catch (error) {
+    console.log("error creating doctor: ", error.message);
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: "Error creating doctor account",
       error: error.message,
@@ -77,6 +78,10 @@ exports.viewDoctors = async (req, res) => {
     const adminId = req.user.id;
     const doctors = await Doctor.find({ role: "doctor" })
       .populate("createdBy", "email name role")
+      .populate("schedules")
+      .populate("appointments")
+      // .populate("patientId")
+      .select("-password")
       .sort({ createdAt: -1 });
 
     if (!doctors) {
@@ -100,7 +105,11 @@ exports.viewDoctor = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const doctor = await Doctor.findById({ _id: id, role: "doctor" });
+    const doctor = await Doctor.findById({ _id: id, role: "doctor" })
+      .populate("appointments")
+      .populate("schedules")
+      // .populate("patientId")
+      .select("-password");
 
     if (!doctor) {
       return res
@@ -113,6 +122,7 @@ exports.viewDoctor = async (req, res) => {
       doctor,
     });
   } catch (error) {
+    console.error("fetch doctor server error: ", error.message);
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: "Error viewing doctor",
       error: error.message,
@@ -166,11 +176,11 @@ exports.updateDoctor = async (req, res) => {
       doctor.schedules = scheduleDocs;
     }
 
-    const updatedDoctor = await doctor.save();
+    await doctor.save();
 
     res.status(StatusCodes.OK).json({
       message: "Doctor updated successfully",
-      doctor: updatedDoctor,
+      doctor: doctor,
     });
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -180,11 +190,12 @@ exports.updateDoctor = async (req, res) => {
   }
 };
 
-exports.deleteDoctor = async (req, res) => {
+exports.archiveDoctor = async (req, res) => {
   try {
     const { id } = req.params;
+    const { isActive } = req.body;
 
-    const doctor = await Doctor.findByIdAndDelete(id);
+    const doctor = await Doctor.findById(id);
 
     if (!doctor || doctor.role !== "doctor") {
       return res
@@ -192,14 +203,50 @@ exports.deleteDoctor = async (req, res) => {
         .json({ message: "Error, doctor not found" });
     }
 
-    await doctor.deleteOne();
+    // Update doctor isActive and terminatedAt.
+    doctor.isActive = isActive;
+    doctor.terminatedAt = new Date();
+
+    await doctor.save();
 
     res.status(StatusCodes.OK).json({
-      message: "doctor account deleted",
+      message: "doctor account archived successfully",
+      doctor,
     });
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      message: "Error deleting doctor account",
+      message: "Error archiving doctor account",
+      error: error.message,
+    });
+  }
+};
+
+exports.unarchiveDoctor = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isActive } = req.body;
+
+    const doctor = await Doctor.findById(id);
+
+    if (!doctor || doctor.role !== "doctor") {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: "Error, doctor not found" });
+    }
+
+    // Update doctor isActive and terminatedAt.
+    doctor.isActive = isActive;
+    doctor.terminatedAt = null;
+
+    await doctor.save();
+
+    res.status(StatusCodes.OK).json({
+      message: "doctor account archived successfully",
+      doctor,
+    });
+  } catch (error) {
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: "Error archiving doctor account",
       error: error.message,
     });
   }

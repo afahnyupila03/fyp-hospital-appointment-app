@@ -6,7 +6,8 @@ const {
   viewDoctors,
   viewDoctor,
   updateDoctor,
-  deleteDoctor,
+  archiveDoctor,
+  unarchiveDoctor
 } = require("../../controller/Admin/doctorManagementController");
 
 module.exports = (router) => {
@@ -14,5 +15,6 @@ module.exports = (router) => {
   router.get("/doctors", auth, restrictTo("admin"), viewDoctors);
   router.get("/doctor/:id", auth, restrictTo("admin"), viewDoctor);
   router.put("/update-doctor/:id", auth, restrictTo("admin"), updateDoctor);
-  router.delete("/delete-doctor/:id", auth, restrictTo("admin"), deleteDoctor);
+  router.put("/archive-doctor/:id", auth, restrictTo("admin"), archiveDoctor);
+  router.put("/unarchive-doctor/:id", auth, restrictTo("admin"), unarchiveDoctor);
 };
