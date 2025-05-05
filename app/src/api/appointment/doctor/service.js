@@ -11,16 +11,22 @@ const getHeaders = () => {
   };
 };
 
-export const viewAppointmentsService = async () => {
-  const res = await fetch("http://localhost:4000/doctor/view-appointments", {
-    headers: getHeaders(),
-  });
+export const viewAppointmentsService = async (page, limit = 10) => {
+  const res = await fetch(
+    `http://localhost:4000/doctor/view-appointments?page=${page}&limit=${limit}`,
+    {
+      headers: getHeaders(),
+    }
+  );
   if (!res.ok) throw new Error("Error fetching doctors appointments");
 
   const data = await res.json();
   const appointments = data.appointments;
+  const count = data.count;
+  const currentPage = data.currentPage;
+  const totalPages = data.totalPages;
 
-  return appointments;
+  return { appointments, count, currentPage, totalPages };
 };
 
 export const viewAppointmentService = async (id) => {

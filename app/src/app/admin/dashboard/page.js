@@ -40,7 +40,7 @@ const dropdownActions = (patient) => [
   },
 ];
 
-const doctorDropdownActions = (doctor,) => [
+const doctorDropdownActions = (doctor) => [
   {
     id: doctor._id,
     type: "link",
@@ -325,7 +325,7 @@ export default function AdminDashboard() {
                     />
                   </td>
                 </tr>
-              ))}
+              ))}  
             </tbody>
           </table>
         </div>

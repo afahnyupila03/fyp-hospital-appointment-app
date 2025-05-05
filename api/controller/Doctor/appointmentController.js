@@ -9,13 +9,19 @@ exports.viewAppointments = async (req, res) => {
   try {
     const doctorId = req.user.id;
 
+    const { page = 1, limit = 10 } = req.query;
+
     console.log("doctor appointments id: ", doctorId);
 
     const appointments = await Appointment.find({ doctorId: doctorId })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
       .populate("doctorId", "name email specialization department")
       .populate("patientId", "email name")
       .populate("notifications")
       .sort({ createdAt: -1 });
+
+    const appointmentCount = await Appointment.countDocuments();
 
     if (!appointments || appointments.length === 0) {
       return res.status(StatusCodes.NOT_FOUND).json({
@@ -28,6 +34,9 @@ exports.viewAppointments = async (req, res) => {
     res.status(StatusCodes.OK).json({
       message: "doctor appointments",
       appointments,
+      count: appointmentCount,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(appointmentCount / limit)
     });
   } catch (error) {
     console.log("error fetching doctor appointments: ", error.message);

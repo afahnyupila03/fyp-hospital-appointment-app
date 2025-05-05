@@ -27,7 +27,7 @@ const userLinks = (user) => {
       return [
         {
           name: "Appointments",
-          href: "dashboard/doctor/appointments",
+          href: "dashboard/appointments",
         },
       ];
     } else if (user.role === "patient") {

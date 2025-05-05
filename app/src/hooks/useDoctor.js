@@ -5,10 +5,11 @@ import {
 } from "@/api/appointment/doctor/service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-export const useDoctorAppointments = () => {
+export const useDoctorAppointments = (page, limit) => {
   return useQuery({
-    queryKey: ["doctor-appointments"],
-    queryFn: viewAppointmentsService,
+    queryKey: ["appointments", page],
+    queryFn: () => viewAppointmentsService(page, limit),
+    keepPreviousData: true,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchInterval: false,
@@ -18,7 +19,7 @@ export const useDoctorAppointments = () => {
 
 export const useDoctorAppointment = (id) => {
   return useQuery({
-    queryKey: ["doctor-appointment", id],
+    queryKey: ["appointment", id],
     queryFn: () => viewAppointmentService(id),
     enabled: !!id,
   });
@@ -31,7 +32,7 @@ export const useUpdateDoctorAppointment = () => {
     mutationFn: ({ id, status }) => updateAppointmentService(id, { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["updated-doctor-appointment"],
+        queryKey: ["appointments"],
       });
     },
   });
