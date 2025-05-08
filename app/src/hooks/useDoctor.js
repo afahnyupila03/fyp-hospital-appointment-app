@@ -9,6 +9,7 @@ export const useDoctorAppointments = (page, limit) => {
   return useQuery({
     queryKey: ["appointments", page],
     queryFn: () => viewAppointmentsService(page, limit),
+
     keepPreviousData: true,
     refetchOnWindowFocus: false,
     refetchOnMount: false,

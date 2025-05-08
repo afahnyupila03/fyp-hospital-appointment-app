@@ -1,80 +1,19 @@
 "use client";
-
-import {
-  useDoctorAppointments,
-  useUpdateDoctorAppointment,
-} from "@/hooks/useDoctor";
-import { AppState } from "@/store/context";
-
-import { UserCard } from "@/components/UserCard";
-import { DoughnutChart, BarChart } from "@/components/Chart";
-import { useEffect, useState } from "react";
-import { CategoryScale } from "chart.js";
-import Chart from "chart.js/auto";
 import Dropdown from "@/components/Dropdown";
+import { useDoctorAppointments } from "@/hooks/useDoctor";
+import React, { useState } from "react";
 
-Chart.register(CategoryScale);
-
-export default function DoctorDashboardPage() {
-  const { user } = AppState();
-  console.log(user);
-
-  const getStatusCounts = (appointments) => {
-    const counts = {
-      pending: 0,
-      confirmed: 0,
-      completed: 0,
-      canceled: 0,
-    };
-
-    appointments.forEach((appt) => {
-      const status = appt.status?.toLowerCase();
-      if (counts[status] !== undefined) {
-        counts[status]++;
-      }
-    });
-
-    return counts;
-  };
-
-  const [docAppointments, setDocAppointments] = useState(null);
-
+function AppointmentsPage() {
   const [page, setPage] = useState(1);
-  const limit = 10;
+  const limit = 15;
 
-  const { data, isLoading, error, isError, isFetching } = useDoctorAppointments(
+  const { data, isLoading, isFetching, isError, error } = useDoctorAppointments(
     page,
     limit
   );
 
-  const { mutateAsync: updateAppointment } = useUpdateDoctorAppointment();
-
-  useEffect(() => {
-    if (data?.appointments) {
-      const statusCounts = getStatusCounts(data?.appointments);
-      const chartData = {
-        labels: ["Pending", "Confirmed", "Completed", "Canceled"],
-        datasets: [
-          {
-            label: "Appointments",
-            data: [
-              statusCounts.pending,
-              statusCounts.confirmed,
-              statusCounts.completed,
-              statusCounts.canceled,
-            ],
-            backgroundColor: ["#facc15", "#22c55e", "#3b82f6", "#ef4444"],
-            borderRadius: 4,
-          },
-        ],
-      };
-
-      setDocAppointments(chartData);
-    }
-  }, [data]);
-
-  if (isLoading) return <p>Loading appointments</p>;
-  if (isError) return <p>{error.message}</p>;
+  if (isLoading || isFetching) return <p>Loading appointments</p>;
+  if (isError) return <p>{error}</p>;
 
   const isFirstPage = page === 1;
   const isLastPage = page === data.totalPages;
@@ -168,51 +107,32 @@ export default function DoctorDashboardPage() {
     }
   };
 
-  const statusColors = {
-    pending: "#facc15", // yellow
-    confirmed: "#22c55e", // green
-    completed: "#3b82f6", // blue
-    canceled: "#ef4444", // red
-  };
-
   return (
     <div>
-      <div className="flex justify-between items-center">
-        <div>
-          <h1>Welcome to CareConnect</h1>
-          <p>CareConnect {user?.role} dashboard</p>
-        </div>
-
-        <div>
-          <UserCard name={user?.name} role={user?.role} />
-        </div>
-      </div>
-
-      {docAppointments && (
-        <>
-          <DoughnutChart
-            chartData={docAppointments}
-            text="Appointment Status Breakdown"
-          />
-
-          <div className="my-6" />
-
-          <BarChart
-            chartData={docAppointments}
-            text="Appointment Status Breakdown"
-          />
-        </>
-      )}
-
       <table className="w-full border-collapse mt-20">
         <thead>
           <tr className="text-left bg-gray-200">
-            <th className="py-4 px-6">S/N</th>
-            <th className="py-4 px-6">Name</th>
-            <th className="py-4 px-6">Email</th>
-            <th className="py-4 px-6">Reason</th>
-            <th className="py-4 px-6">Note</th>
-            <th className="py-4 px-6">Status</th>
+            <th className="py-4 px-6" style={{ width: "2%" }}>
+              S/N
+            </th>
+            <th className="py-4 px-6" style={{ width: "12%" }}>
+              Name
+            </th>
+            <th className="py-4 px-6" style={{ width: "12%" }}>
+              Email
+            </th>
+            <th className="py-4 px-6" style={{ width: "6%" }}>
+              Reason
+            </th>
+            <th className="py-4 px-6" style={{ width: "15%" }}>
+              Note
+            </th>
+            <th className="py-4 px-6" style={{ width: "4%" }}>
+              Status
+            </th>
+            <th className="py-4 px-6" style={{ width: "1%" }}>
+              {/* actions tab. */}
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -220,10 +140,10 @@ export default function DoctorDashboardPage() {
             <tr
               key={appointment._id}
               className="bg-gray-100"
-              style={{
-                backgroundColor:
-                  statusColors[appointment.status?.toLowerCase()] || "#f1f5f9",
-              }}
+              // style={{
+              //   backgroundColor:
+              //     statusColors[appointment.status?.toLowerCase()] || "#f1f5f9",
+              // }}
             >
               <td className="py-4 px-6 truncate max-w-[150px]">{index + 1}</td>
               <td
@@ -241,7 +161,7 @@ export default function DoctorDashboardPage() {
                 {appointment.notes}
               </td>
               <td className="py-4 px-6">{appointment.status}</td>
-              <td className="py-4 px-6">
+              <td className="py-4 px-6" title="appointment actions">
                 <Dropdown
                   actions={appointmentActions(appointment)}
                   actionHandler={(actionLabel) => {
@@ -287,3 +207,5 @@ export default function DoctorDashboardPage() {
     </div>
   );
 }
+
+export default AppointmentsPage;
