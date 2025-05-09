@@ -6,7 +6,7 @@ import {
   useDoctorData,
   useDoctorsMeta,
   useUpdateDoctor,
-} from "@/hooks/useAdmin";
+} from "@/hooks/admin/useAdmin";
 import { createDoctorSchema } from "@/schema/schema";
 import { Formik, Form, FieldArray } from "formik";
 import { useRouter, useSearchParams, useParams } from "next/navigation";

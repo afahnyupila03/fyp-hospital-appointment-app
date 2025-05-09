@@ -2,6 +2,9 @@ import React from "react";
 import { Bar, Doughnut, Pie } from "react-chartjs-2";
 
 function PieChart({ chartData, text }) {
+
+   if (!chartData?.labels || !chartData?.datasets) return null;
+
   return (
     <div className="w-64 h-64 mx-auto">
       {/* 16rem x 16rem */}
@@ -31,6 +34,9 @@ function PieChart({ chartData, text }) {
 export default PieChart;
 
 export const DoughnutChart = ({ chartData, text }) => {
+
+   if (!chartData?.labels || !chartData?.datasets) return null;
+
   return (
     <div className="w-64 h-64 mx-auto">
       {/* 16rem x 16rem */}
@@ -58,6 +64,9 @@ export const DoughnutChart = ({ chartData, text }) => {
 };
 
 export const BarChart = ({ chartData, text }) => {
+
+   if (!chartData?.labels || !chartData?.datasets) return null;
+
   return (
     <div className="w-full max-w-md mx-auto h-72">
       

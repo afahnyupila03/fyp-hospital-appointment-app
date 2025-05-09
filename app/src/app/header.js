@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogPanel, PopoverGroup } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { AppState } from "@/store/context";
 import Link from "next/link";
+
+import { useDoctorNotifications } from "@/hooks/doctor/useDoctorNotification";
+import Notification from "@/components/Notification";
 
 const userLinks = (user) => {
   if (user) {
@@ -40,7 +43,24 @@ export const Header = () => {
   const { user, loading } = AppState();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  if (loading) return <div>Loading.....</div>;
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [notifications, setNotifications] = useState(null);
+
+  const { data, isLoading } = useDoctorNotifications();
+
+  useEffect(() => {
+    if (isLoading) {
+      console.log("notification loading");
+    }
+    if (user && data) {
+      setNotifications(data?.notifications);
+      setNotificationCount(data?.notifications.length);
+    }
+    console.log(
+      "doctor notification query data length: ",
+      data?.notifications.length
+    );
+  }, [user, data]);
 
   const redirectByUserRole = (role) => {
     let url;
@@ -63,6 +83,8 @@ export const Header = () => {
   };
 
   const links = userLinks(user);
+
+  if (loading) return <div>Loading.....</div>;
 
   return (
     <header className="bg-white">
@@ -110,8 +132,21 @@ export const Header = () => {
             ))}
         </PopoverGroup>
 
-        <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-          {user && <button type="button">Logout</button>}
+        <div className="hidden lg:flex lg:flex-1 lg:justify-end items-center">
+          {user && (user.role === "doctor" || user.role === "patient") && (
+            <div className="flex items-center justify-center gap-4">
+              <Notification
+                notifications={data?.notifications}
+                notificationCounter={notificationCount}
+              />
+              <button
+                type="button"
+                className="px-4 py-2 bg-red-500 text-white rounded"
+              >
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       </nav>
 
@@ -161,7 +196,17 @@ export const Header = () => {
                   ))}
               </div>
               <div className="py-6">
-                {user && <button type="button">Logout</button>}
+                {user &&
+                  (user.role === "doctor" || user.role === "patient") && (
+                    <>
+                      <Notification
+                        notifications={data?.notifications}
+                        notificationCounter={notificationCount}
+                      />
+
+                      <button type="button">Logout</button>
+                    </>
+                  )}
               </div>
             </div>
           </div>

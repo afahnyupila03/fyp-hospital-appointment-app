@@ -1,6 +1,6 @@
 "use client";
 import Dropdown from "@/components/Dropdown";
-import { useDoctorAppointments } from "@/hooks/useDoctor";
+import { useDoctorAppointments } from "@/hooks/doctor/useDoctor";
 import React, { useState } from "react";
 
 function AppointmentsPage() {

@@ -1,6 +1,6 @@
 "use client";
 
-import { usePatientAppointment } from "@/hooks/usePatient";
+import { usePatientAppointment } from "@/hooks/patient/usePatient";
 
 export const Appointment = ({ id }) => {
   const { data, isLoading, isError, error, refetch, isRefetchError } =

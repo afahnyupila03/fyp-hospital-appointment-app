@@ -1,6 +1,6 @@
 "use client";
 
-import { useDoctorsData } from "@/hooks/useAdmin";
+import { useDoctorsData } from "@/hooks/admin/useAdmin";
 import Link from "next/link";
 
 export default function DoctorsHomePage() {

@@ -3,7 +3,7 @@
 import {
   useDoctorAppointments,
   useUpdateDoctorAppointment,
-} from "@/hooks/useDoctor";
+} from "@/hooks/doctor/useDoctor";
 import { AppState } from "@/store/context";
 
 import { UserCard } from "@/components/UserCard";
@@ -188,15 +188,17 @@ export default function DoctorDashboardPage() {
         </div>
       </div>
 
-      {docAppointments && (
+      {docAppointments?.datasets?.[0]?.data?.every((count) => count === 0) ? (
+        <p className="mt-10 text-center text-gray-500">
+          No appointment data to display in charts.
+        </p>
+      ) : (
         <>
           <DoughnutChart
             chartData={docAppointments}
             text="Appointment Status Breakdown"
           />
-
           <div className="my-6" />
-
           <BarChart
             chartData={docAppointments}
             text="Appointment Status Breakdown"
@@ -204,86 +206,96 @@ export default function DoctorDashboardPage() {
         </>
       )}
 
-      <table className="w-full border-collapse mt-20">
-        <thead>
-          <tr className="text-left bg-gray-200">
-            <th className="py-4 px-6">S/N</th>
-            <th className="py-4 px-6">Name</th>
-            <th className="py-4 px-6">Email</th>
-            <th className="py-4 px-6">Reason</th>
-            <th className="py-4 px-6">Note</th>
-            <th className="py-4 px-6">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data?.appointments?.map((appointment, index) => (
-            <tr
-              key={appointment._id}
-              className="bg-gray-100"
-              style={{
-                backgroundColor:
-                  statusColors[appointment.status?.toLowerCase()] || "#f1f5f9",
-              }}
-            >
-              <td className="py-4 px-6 truncate max-w-[150px]">{index + 1}</td>
-              <td
-                className="py-4 px-6 truncate max-w-[150px]"
-                title={appointment.patientId.name}
-              >
-                {appointment.patientId.name}
-              </td>
-              <td className="py-4 px-6">{appointment.patientId.email}</td>
-              <td className="py-4 px-6">{appointment.reason}</td>
-              <td
-                className="py-4 px-6 truncate max-w-[150px]"
-                title={appointment.notes}
-              >
-                {appointment.notes}
-              </td>
-              <td className="py-4 px-6">{appointment.status}</td>
-              <td className="py-4 px-6">
-                <Dropdown
-                  actions={appointmentActions(appointment)}
-                  actionHandler={(actionLabel) => {
-                    if (actionLabel === "confirm") {
-                      confirmHandler(appointment._id);
-                    } else if (actionLabel === "complete") {
-                      completedHandler(appointment._id);
-                    } else {
-                      cancelHandler(appointment._id);
-                    }
+      <div className="mt-20">
+        {data?.appointments?.length === 0 ? (
+          <div className="text-center py-10 text-gray-500">
+            <p>No appointments found at the moment.</p>
+          </div>
+        ) : (
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="text-left bg-gray-200">
+                <th className="py-4 px-6">S/N</th>
+                <th className="py-4 px-6">Name</th>
+                <th className="py-4 px-6">Email</th>
+                <th className="py-4 px-6">Reason</th>
+                <th className="py-4 px-6">Note</th>
+                <th className="py-4 px-6">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.appointments.map((appointment, index) => (
+                <tr
+                  key={appointment._id}
+                  className="bg-gray-100"
+                  style={{
+                    backgroundColor:
+                      statusColors[appointment.status?.toLowerCase()] ||
+                      "#f1f5f9",
                   }}
-                />
-              </td>
-            </tr>
-          ))}
-
-          <tr>
-            <td colSpan={6} className="py-6 px-6 text-right">
-              <button
-                onClick={() => setPage((p) => Math.max(p - 1, 1))}
-                disabled={isFirstPage}
-                className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <span className="mx-4">
-                {data?.currentPage} of {data?.totalPages}
-              </span>
-              <button
-                onClick={() =>
-                  setPage((p) => (p < data?.totalPages ? p + 1 : p))
-                }
-                disabled={isLastPage}
-                className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
-              >
-                Next
-              </button>
-              {isFetching && <span className="ml-4">Loading...</span>}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+                >
+                  <td className="py-4 px-6 truncate max-w-[150px]">
+                    {index + 1}
+                  </td>
+                  <td
+                    className="py-4 px-6 truncate max-w-[150px]"
+                    title={appointment.patientId.name}
+                  >
+                    {appointment.patientId.name}
+                  </td>
+                  <td className="py-4 px-6">{appointment.patientId.email}</td>
+                  <td className="py-4 px-6">{appointment.reason}</td>
+                  <td
+                    className="py-4 px-6 truncate max-w-[150px]"
+                    title={appointment.notes}
+                  >
+                    {appointment.notes}
+                  </td>
+                  <td className="py-4 px-6">{appointment.status}</td>
+                  <td className="py-4 px-6">
+                    <Dropdown
+                      actions={appointmentActions(appointment)}
+                      actionHandler={(actionLabel) => {
+                        if (actionLabel === "confirm") {
+                          confirmHandler(appointment._id);
+                        } else if (actionLabel === "complete") {
+                          completedHandler(appointment._id);
+                        } else {
+                          cancelHandler(appointment._id);
+                        }
+                      }}
+                    />
+                  </td>
+                </tr>
+              ))}
+              <tr>
+                <td colSpan={6} className="py-6 px-6 text-right">
+                  <button
+                    onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                    disabled={isFirstPage}
+                    className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                  <span className="mx-4">
+                    {data?.currentPage} of {data?.totalPages}
+                  </span>
+                  <button
+                    onClick={() =>
+                      setPage((p) => (p < data?.totalPages ? p + 1 : p))
+                    }
+                    disabled={isLastPage}
+                    className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                  {isFetching && <span className="ml-4">Loading...</span>}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }

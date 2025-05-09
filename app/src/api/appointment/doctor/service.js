@@ -18,9 +18,10 @@ export const viewAppointmentsService = async (page, limit = 10) => {
       headers: getHeaders(),
     }
   );
-  if (!res.ok) throw new Error("Error fetching doctors appointments");
 
   const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+
   const appointments = data.appointments;
   const count = data.count;
   const currentPage = data.currentPage;
@@ -36,8 +37,9 @@ export const viewAppointmentService = async (id) => {
       headers: getHeaders(),
     }
   );
-  if (!res.ok) throw new Error("Error fetching doctor appointment");
   const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+
   const appointment = data.appointment;
 
   return appointment;
@@ -52,8 +54,10 @@ export const updateAppointmentService = async (id, formData) => {
       body: JSON.stringify(formData),
     }
   );
-  if (!res.ok) throw new Error("Error fetching doctor appointment");
+
   const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+
   const updatedAppointment = data.updatedAppointment;
 
   return updatedAppointment;

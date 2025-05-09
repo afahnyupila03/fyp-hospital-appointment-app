@@ -3,9 +3,8 @@
 import {
   useDoctorAppointment,
   useUpdateDoctorAppointment,
-} from "@/hooks/useDoctor";
-import { Formik, Form, Field } from "formik";
-import { useState, useEffect } from "react";
+} from "@/hooks/doctor/useDoctor";
+import { Formik, Form } from "formik";
 
 import CustomInput from "@/components/CustomInput";
 
@@ -13,16 +12,6 @@ export const AppointmentId = ({ id }) => {
   const { data, isLoading, isError, error, refetch } = useDoctorAppointment(id);
 
   const { mutateAsync: updateAppointment } = useUpdateDoctorAppointment();
-
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    if (data?.status === "pending" || data?.status === "confirmed") {
-      setIsVisible(true);
-    } else {
-      setIsVisible(false);
-    }
-  }, [data?.status]);
 
   if (isLoading) return <p>Loading appointment details</p>;
   if (isError) return <p>{`${error.message} - ${error.name}`}</p>;
@@ -151,9 +140,6 @@ export const AppointmentId = ({ id }) => {
               </Form>
             )}
           </Formik>
-          <p>Status: {status}</p>
-          <button type="button">Update</button>
-          {isVisible && <button type="button">Update</button>}
         </div>
       </div>
     </div>

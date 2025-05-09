@@ -22,7 +22,7 @@ import {
   usePatientsData,
   useUnarchiveDoctor,
   useUnarchivePatient,
-} from "@/hooks/useAdmin";
+} from "@/hooks/admin/useAdmin";
 
 Chart.register(CategoryScale);
 
