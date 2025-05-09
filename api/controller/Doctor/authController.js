@@ -25,7 +25,7 @@ exports.loginDoctor = async (req, res) => {
     if (!doctor) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         message:
-          "No account with email exist, please see doctor to create account.",
+          "No account with email exist, please see admin to create account.",
       });
     }
     if (doctor.role !== "doctor") {
@@ -58,28 +58,31 @@ exports.loginDoctor = async (req, res) => {
 
 exports.getDoctor = async (req, res) => {
   try {
-    const doctorId = req.user.id
+    const doctorId = req.user.id;
 
-    const doctor = await Doctor.findById(doctorId).select("-password") // Exclude password field
+    const doctor = await Doctor.findById(doctorId)
+      .populate("appointments")
+      .populate("notifications")
+      .populate("schedules")
+      .select("-password"); // Exclude password field
 
     if (!doctor) {
       return res.status(StatusCodes.NOT_FOUND).json({
-        message: 'Doctor not found'
-      })
+        message: "Doctor not found",
+      });
     }
-    
+
     res.status(StatusCodes.OK).json({
-      message: 'doctor data retrieved successfully.',
-      doctor
-    })
-  }
-  catch (error) {
+      message: "doctor data retrieved successfully.",
+      doctor,
+    });
+  } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      message: 'Error fetching doctor data',
-      error: error.message
-    })
+      message: "Error fetching doctor data",
+      error: error.message,
+    });
   }
-}
+};
 
 exports.logoutDoctor = async (req, res) => {
   try {

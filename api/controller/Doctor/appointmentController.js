@@ -2,32 +2,37 @@ const { StatusCodes } = require("http-status-codes");
 
 const Appointment = require("../../models/appointment");
 const Notification = require("../../models/notification");
-const User = require("../../models/user");
-const { default: mongoose } = require("mongoose");
 
 exports.viewAppointments = async (req, res) => {
   try {
     const doctorId = req.user.id;
 
+    const { page = 1, limit = 10 } = req.query;
+
     console.log("doctor appointments id: ", doctorId);
 
-    const appointments = await Appointment.find({ doctorId: doctorId })
+    const appointments = await Appointment.find({ doctorId })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
       .populate("doctorId", "name email specialization department")
       .populate("patientId", "email name")
       .populate("notifications")
       .sort({ createdAt: -1 });
 
-    if (!appointments || appointments.length === 0) {
-      return res.status(StatusCodes.NOT_FOUND).json({
-        message: "no appointments for this doctor found",
-      });
-    }
+    const count = await Appointment.countDocuments({ doctorId });
+    const totalPages = Math.ceil(count / limit);
+    const currentPage = parseInt(page);
+
+    
 
     console.log("APPOINTMENTS: ", appointments);
 
     res.status(StatusCodes.OK).json({
       message: "doctor appointments",
       appointments,
+      count,
+      currentPage,
+      totalPages,
     });
   } catch (error) {
     console.log("error fetching doctor appointments: ", error.message);
@@ -46,7 +51,7 @@ exports.viewAppointment = async (req, res) => {
 
     if (!doctorId) {
       return res
-        .status(401)
+        .status(StatusCodes.UNAUTHORIZED)
         .json({ message: "Unauthorized access. Please log in." });
     }
 

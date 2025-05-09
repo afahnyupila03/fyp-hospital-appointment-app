@@ -4,7 +4,7 @@ import {
   useArchivePatient,
   usePatientData,
   useUnarchivePatient,
-} from "@/hooks/useAdmin";
+} from "@/hooks/admin/useAdmin";
 import Link from "next/link";
 
 export const PatientId = ({ id }) => {

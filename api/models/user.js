@@ -36,7 +36,7 @@ const userSchema = new Schema(
       type: Boolean,
       default: true,
     },
-    terminatedAt: Date
+    terminatedAt: Date,
   },
   { timestamps: true }
 );

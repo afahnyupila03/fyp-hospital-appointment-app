@@ -4,7 +4,7 @@ import {
   useArchiveDoctor,
   useDoctorData,
   useUnarchiveDoctor,
-} from "@/hooks/useAdmin";
+} from "@/hooks/admin/useAdmin";
 
 import Link from "next/link";
 

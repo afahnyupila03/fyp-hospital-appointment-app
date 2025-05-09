@@ -57,7 +57,7 @@ const doctorSchema = new Schema(
       type: Boolean,
       default: true,
     },
-    terminatedAt: Date
+    terminatedAt: Date,
   },
   { timestamps: true }
 );

@@ -40,6 +40,12 @@ export const useDoctorsMeta = () => {
   return useQuery({
     queryKey: ["doctor-meta"],
     queryFn: fetchDoctorMeta,
+    refetchInterval: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    refetchOnWindowFocus: false,  
+    staleTime: Infinity,
+    
   });
 };
 

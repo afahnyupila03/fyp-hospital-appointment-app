@@ -4,7 +4,7 @@ import {
   useArchivePatient,
   usePatientsData,
   useUnarchivePatient,
-} from "@/hooks/useAdmin";
+} from "@/hooks/admin/useAdmin";
 import Link from "next/link";
 
 export default function PatientsHomePage() {

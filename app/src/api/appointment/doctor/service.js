@@ -11,16 +11,23 @@ const getHeaders = () => {
   };
 };
 
-export const viewAppointmentsService = async () => {
-  const res = await fetch("http://localhost:4000/doctor/view-appointments", {
-    headers: getHeaders(),
-  });
-  if (!res.ok) throw new Error("Error fetching doctors appointments");
+export const viewAppointmentsService = async (page, limit = 10) => {
+  const res = await fetch(
+    `http://localhost:4000/doctor/view-appointments?page=${page}&limit=${limit}`,
+    {
+      headers: getHeaders(),
+    }
+  );
 
   const data = await res.json();
-  const appointments = data.appointments;
+  if (!res.ok) throw new Error(data.message);
 
-  return appointments;
+  const appointments = data.appointments;
+  const count = data.count;
+  const currentPage = data.currentPage;
+  const totalPages = data.totalPages;
+
+  return { appointments, count, currentPage, totalPages };
 };
 
 export const viewAppointmentService = async (id) => {
@@ -30,8 +37,9 @@ export const viewAppointmentService = async (id) => {
       headers: getHeaders(),
     }
   );
-  if (!res.ok) throw new Error("Error fetching doctor appointment");
   const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+
   const appointment = data.appointment;
 
   return appointment;
@@ -46,8 +54,10 @@ export const updateAppointmentService = async (id, formData) => {
       body: JSON.stringify(formData),
     }
   );
-  if (!res.ok) throw new Error("Error fetching doctor appointment");
+
   const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+
   const updatedAppointment = data.updatedAppointment;
 
   return updatedAppointment;

@@ -15,7 +15,12 @@ const notificationSchema = new Schema(
     },
     type: {
       type: String,
-      enum: ["appointment_request", 'appointment_request_update', "appointment_status_update", "general"],
+      enum: [
+        "appointment_request",
+        "appointment_request_update",
+        "appointment_status_update",
+        "general",
+      ],
     },
     message: {
       type: String,
@@ -32,7 +37,7 @@ const notificationSchema = new Schema(
     },
   },
   {
-    timeStamp: true,
+    timestamps: true,
   }
 );
 
