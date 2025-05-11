@@ -9,6 +9,7 @@ import Link from "next/link";
 import {
   useDoctorNotifications,
   useUpdateDoctorNotification,
+  useDeleteDoctorNotification,
 } from "@/hooks/doctor/useDoctorNotification";
 import Notification from "@/components/Notification";
 
@@ -54,6 +55,7 @@ export const Header = () => {
       .length || 0;
 
   const { mutateAsync: updateNotification } = useUpdateDoctorNotification();
+  const { mutateAsync: deleteNotification } = useDeleteDoctorNotification();
 
   const markAsReadHandler = async (id) => {
     try {
@@ -66,6 +68,12 @@ export const Header = () => {
       console.error("error updating notification status to ['read'] :", error);
       throw new Error(error);
     }
+  };
+
+  const deleteNotificationHandler = async (id) => {
+    console.log("Performing delete action...");
+    await deleteNotification({id});
+    console.log("Delete doctor notification success");
   };
 
   const redirectByUserRole = (role) => {
@@ -145,6 +153,7 @@ export const Header = () => {
                 notifications={notifications}
                 notificationCounter={notificationCount}
                 notificationHandler={markAsReadHandler}
+                deleteHandler={deleteNotificationHandler}
               />
               <button
                 type="button"

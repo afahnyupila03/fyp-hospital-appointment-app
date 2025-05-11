@@ -1,6 +1,5 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { BellIcon } from "@heroicons/react/20/solid";
-import dayjs from "dayjs";
 import Link from "next/link";
 
 const styles = {
@@ -29,7 +28,10 @@ export default function Notification({
   notificationCounter,
   notifications,
   notificationHandler,
+  deleteHandler,
 }) {
+  const role = localStorage.getItem("role");
+
   const messageDate = (createdAt) => {
     if (!createdAt) {
       return "No date";
@@ -59,7 +61,12 @@ export default function Notification({
 
   return (
     <Menu as="div" className="relative inline-block text-left">
-      <div style={styles.notificationWrapper}>
+      <div
+        title={`${notificationCounter} unread message${
+          notificationCounter > 0 && "s"
+        }`}
+        style={styles.notificationWrapper}
+      >
         <MenuButton className="inline-flex justify-center items-center">
           <BellIcon aria-hidden="true" className="size-9 text-gray-400" />
         </MenuButton>
@@ -83,38 +90,58 @@ export default function Notification({
         data-leave:duration-75 
         data-leave:ease-in"
       >
-        <div className="py-1">
-          {notifications?.slice(0, 5).map((notification) => (
-            <MenuItem key={notification._id}>
-              <div className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden">
-                <div>
-                  <p>{notification.type}</p>
-                  <p>{messageDate(notification.createdAt)}</p>
-                </div>
-                <div className="flex py-1 justify-between items-center">
-                  {notification.status === "unread" ? (
-                    <button className="cursor-pointer"
-                      onClick={() => notificationHandler(notification._id)}
-                    >
-                      Mark as read
-                    </button>
-                  ) : (
-                    <div className="w-[90px]"></div> // maintain space
-                  )}
-                  <Link
-                    href={`doctor/dashboard/notifications/${notification._id}`}
-                  >
-                    View
-                  </Link>
-                </div>
-              </div>
-            </MenuItem>
-          ))}
-        </div>
+        {notificationCounter > 0 ? (
+          <>
+            <div className="py-1">
+              {notifications?.slice(0, 5).map((notification) => (
+                <MenuItem key={notification._id}>
+                  <div className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden">
+                    <div>
+                      <p>{notification.type}</p>
+                      <p>{messageDate(notification.createdAt)}</p>
+                    </div>
+                    <div className="flex py-1 justify-between items-center">
+                      {notification.status === "unread" ? (
+                        <button
+                          className="cursor-pointer"
+                          onClick={() => notificationHandler(notification._id)}
+                        >
+                          Mark as read
+                        </button>
+                      ) : (
+                        <div className="w-[90px]"></div> // maintain space
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => deleteHandler(notification._id)}
+                      >
+                        Delete
+                      </button>
+                      <Link
+                        href={`/${role}/dashboard/notifications/${notification._id}`}
+                      >
+                        View
+                      </Link>
+                    </div>
+                  </div>
+                </MenuItem>
+              ))}
+            </div>
 
-        <div className="py-1 px-10">
-          <p className="pb-2 text-right text-grey-200">See all</p>
-        </div>
+            <div className="py-1 pr-4 flex justify-end">
+              <Link
+                href={`/${role}/dashboard/notifications`}
+                className="pb-2 text-right text-grey-200"
+              >
+                See all
+              </Link>
+            </div>
+          </>
+        ) : (
+          <div className="py-1">
+            <p className="text-center">No notifications</p>
+          </div>
+        )}
       </MenuItems>
     </Menu>
   );

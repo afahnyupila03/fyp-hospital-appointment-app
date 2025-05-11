@@ -3,6 +3,7 @@ const {
   viewNotification,
   updateNotification,
   requestNotificationPermission,
+  deleteNotification,
 } = require("../../controller/Doctor/notificationController");
 
 const { auth, restrictTo } = require("../../middlewares/auth");
@@ -21,5 +22,11 @@ module.exports = (router) => {
     auth,
     restrictTo("doctor"),
     updateNotification
+  );
+  router.delete(
+    "/delete-notification/:id",
+    auth,
+    restrictTo("doctor"),
+    deleteNotification
   );
 };

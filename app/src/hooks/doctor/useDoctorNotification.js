@@ -2,7 +2,8 @@ import {
   viewDoctorNotifications,
   viewDoctorNotification,
   updateDoctorNotificationStatus,
-  requestDoctorNotificationPermission
+  requestDoctorNotificationPermission,
+  deleteDoctorNotification,
 } from "@/api/appointment/doctor/notificationService";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -46,5 +47,17 @@ export const useUpdateDoctorNotification = () => {
         queryKey: ["notification", id],
       });
     },
+  });
+};
+
+export const useDeleteDoctorNotification = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({id}) => deleteDoctorNotification(id),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: ["notifications"],
+      }),
   });
 };

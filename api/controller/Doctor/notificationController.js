@@ -146,3 +146,35 @@ exports.updateNotification = async (req, res) => {
     });
   }
 };
+
+exports.deleteNotification = async (req, res) => {
+  try {
+    const doctorId = req.user.id;
+    const { id } = req.params;
+
+    if (!doctorId) {
+      return res
+        .status(StatusCodes.UNAUTHORIZED)
+        .json({ message: "Please reauthenticate account to perform action." });
+    }
+
+    const ids = id.split(","); // Check if id is a comma-separated list.
+
+    if (ids.length === 1) {
+      await Notification.findByIdAndDelete(ids[0]);
+    } else {
+      await Notification.deleteMany({ _id: { $in: ids } });
+    }
+    console.log('notification delete success')
+
+    res.status(StatusCodes.OK).json({
+      message: "Notification(s) delete success",
+    });
+  } catch (error) {
+    console.log("error deleting doctor notification(s)");
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: "Error deleting doctor notification(s)",
+      error: error.message,
+    });
+  }
+};

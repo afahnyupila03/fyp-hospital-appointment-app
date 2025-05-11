@@ -16,7 +16,7 @@ export const requestDoctorNotificationPermission = async (granted) => {
   const res = await fetch(
     "http://localhost:4000/doctor/notification-permission",
     {
-      method: 'POST',
+      method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(granted),
     }
@@ -74,4 +74,18 @@ export const updateDoctorNotificationStatus = async (id, status) => {
   const { notification } = data;
 
   return notification;
+};
+
+export const deleteDoctorNotification = async (id) => {
+  const res = await fetch(
+    `http://localhost:4000/doctor/delete-notification/${id}`,
+    {
+      method: "DELETE",
+      headers: getHeaders(),
+    }
+  );
+
+  const data = await res.json();
+
+  if (!res.ok) throw new Error(data.message);
 };
