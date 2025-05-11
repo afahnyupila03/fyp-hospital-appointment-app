@@ -44,7 +44,7 @@ export default function Dropdown({ actions, actionHandler }) {
                       active ? "bg-gray-100" : ""
                     } group flex w-full items-center px-4 py-2 text-sm text-gray-700`}
                   >
-                    {action.label} / {action.actionKey}
+                    {action.label}
                   </button>
                 )
               }
