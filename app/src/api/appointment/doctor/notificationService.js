@@ -12,6 +12,23 @@ const getHeaders = () => {
   };
 };
 
+export const requestDoctorNotificationPermission = async (granted) => {
+  const res = await fetch(
+    "http://localhost:4000/doctor/notification-permission",
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(granted),
+    }
+  );
+  const data = await res.json();
+
+  if (!res.ok)
+    throw new Error(data.message || "permission request not granted.");
+
+  return data.message;
+};
+
 export const viewDoctorNotifications = async () => {
   const res = await fetch("http://localhost:4000/doctor/notifications", {
     headers: getHeaders(),
@@ -40,13 +57,13 @@ export const viewDoctorNotification = async (id) => {
   return notification;
 };
 
-export const updateDoctorNotificationStatus = async (id, payload) => {
+export const updateDoctorNotificationStatus = async (id, status) => {
   const res = await fetch(
     `http://localhost:4000/doctor/update-notification/${id}`,
     {
       method: "PUT",
       headers: getHeaders(),
-      body: JSON.stringify(payload),
+      body: JSON.stringify(status),
     }
   );
 

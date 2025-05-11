@@ -6,7 +6,10 @@ import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { AppState } from "@/store/context";
 import Link from "next/link";
 
-import { useDoctorNotifications } from "@/hooks/doctor/useDoctorNotification";
+import {
+  useDoctorNotifications,
+  useUpdateDoctorNotification,
+} from "@/hooks/doctor/useDoctorNotification";
 import Notification from "@/components/Notification";
 
 const userLinks = (user) => {
@@ -43,24 +46,27 @@ export const Header = () => {
   const { user, loading } = AppState();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const [notificationCount, setNotificationCount] = useState(0);
-  const [notifications, setNotifications] = useState(null);
-
   const { data, isLoading } = useDoctorNotifications();
 
-  useEffect(() => {
-    if (isLoading) {
-      console.log("notification loading");
+  const notifications = data?.notifications || [];
+  const notificationCount =
+    notifications?.filter((notification) => notification.status === "unread")
+      .length || 0;
+
+  const { mutateAsync: updateNotification } = useUpdateDoctorNotification();
+
+  const markAsReadHandler = async (id) => {
+    try {
+      await updateNotification({
+        id,
+        status: "read",
+      });
+      console.log(`notification status updated to [read] with id ${id}`);
+    } catch (error) {
+      console.error("error updating notification status to ['read'] :", error);
+      throw new Error(error);
     }
-    if (user && data) {
-      setNotifications(data?.notifications);
-      setNotificationCount(data?.notifications.length);
-    }
-    console.log(
-      "doctor notification query data length: ",
-      data?.notifications.length
-    );
-  }, [user, data]);
+  };
 
   const redirectByUserRole = (role) => {
     let url;
@@ -136,14 +142,15 @@ export const Header = () => {
           {user && (user.role === "doctor" || user.role === "patient") && (
             <div className="flex items-center justify-center gap-4">
               <Notification
-                notifications={data?.notifications}
+                notifications={notifications}
                 notificationCounter={notificationCount}
+                notificationHandler={markAsReadHandler}
               />
               <button
                 type="button"
                 className="px-4 py-2 bg-red-500 text-white rounded"
               >
-                Logout
+                Logout big
               </button>
             </div>
           )}

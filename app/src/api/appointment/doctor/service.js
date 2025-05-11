@@ -45,13 +45,13 @@ export const viewAppointmentService = async (id) => {
   return appointment;
 };
 
-export const updateAppointmentService = async (id, formData) => {
+export const updateAppointmentService = async (id, status) => {
   const res = await fetch(
     `http://localhost:4000/doctor/update-appointment/${id}`,
     {
       method: "PUT",
       headers: getHeaders(),
-      body: JSON.stringify(formData),
+      body: JSON.stringify(status),
     }
   );
 

@@ -25,33 +25,36 @@ const styles = {
   },
 };
 
-export default function Notification({ notificationCounter, notifications }) {
+export default function Notification({
+  notificationCounter,
+  notifications,
+  notificationHandler,
+}) {
   const messageDate = (createdAt) => {
+    if (!createdAt) {
+      return "No date";
+    }
+
     const now = new Date();
     const created = new Date(createdAt);
     const diffInSeconds = Math.floor((now - created) / 1000);
 
     if (diffInSeconds < 60) {
-      return `${diffInSeconds} second${diffInSeconds !== 1 && "s"} ago`;
+      return `${diffInSeconds} second${diffInSeconds !== 1 ? "s" : ""} ago`;
     }
 
     const diffInMinutes = Math.floor(diffInSeconds / 60);
-    if (diffInMinutes) {
-      return `${diffInMinutes} minutes${diffInMinutes !== 1 && "s"} ago`;
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes} minute${diffInMinutes !== 1 ? "s" : ""} ago`;
     }
 
     const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours) {
-      return `${diffInHours} hour${diffInHours !== 1 && "s"} ago`;
+    if (diffInHours < 24) {
+      return `${diffInHours} hour${diffInHours !== 1 ? "s" : ""} ago`;
     }
 
-    // Format for messages older than 24hours.
-    return created.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `${diffInDays} day${diffInDays !== 1 ? "s" : ""} ago`;
   };
 
   return (
@@ -81,19 +84,23 @@ export default function Notification({ notificationCounter, notifications }) {
         data-leave:ease-in"
       >
         <div className="py-1">
-          {notifications?.map((notification) => (
+          {notifications?.slice(0, 5).map((notification) => (
             <MenuItem key={notification._id}>
               <div className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden">
                 <div>
                   <p>{notification.type}</p>
                   <p>{messageDate(notification.createdAt)}</p>
                 </div>
-                <div>
-                  <button
-                    onClick={() => console.log("notification marked as read")}
-                  >
-                    Mark as read
-                  </button>
+                <div className="flex py-1 justify-between items-center">
+                  {notification.status === "unread" ? (
+                    <button className="cursor-pointer"
+                      onClick={() => notificationHandler(notification._id)}
+                    >
+                      Mark as read
+                    </button>
+                  ) : (
+                    <div className="w-[90px]"></div> // maintain space
+                  )}
                   <Link
                     href={`doctor/dashboard/notifications/${notification._id}`}
                   >
@@ -103,14 +110,6 @@ export default function Notification({ notificationCounter, notifications }) {
               </div>
             </MenuItem>
           ))}
-          <MenuItem>
-            <a
-              href="#"
-              className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
-            >
-              Account settings
-            </a>
-          </MenuItem>
         </div>
 
         <div className="py-1 px-10">

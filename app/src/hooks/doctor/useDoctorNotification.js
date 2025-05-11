@@ -2,8 +2,16 @@ import {
   viewDoctorNotifications,
   viewDoctorNotification,
   updateDoctorNotificationStatus,
+  requestDoctorNotificationPermission
 } from "@/api/appointment/doctor/notificationService";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+export const useDoctorNotificationPermission = () => {
+  return useMutation({
+    mutationFn: ({ granted }) =>
+      requestDoctorNotificationPermission({ granted }),
+  });
+};
 
 export const useDoctorNotifications = () => {
   return useQuery({
@@ -28,8 +36,8 @@ export const useUpdateDoctorNotification = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, payload = {} }) =>
-      updateDoctorNotificationStatus(id, { payload }),
+    mutationFn: ({ id, status }) =>
+      updateDoctorNotificationStatus(id, { status }),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({
         queryKey: ["notifications"],

@@ -31,9 +31,12 @@ export const useUpdateDoctorAppointment = () => {
 
   return useMutation({
     mutationFn: ({ id, status }) => updateAppointmentService(id, { status }),
-    onSuccess: () => {
+    onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({
         queryKey: ["appointments"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["appointment", id],
       });
     },
   });

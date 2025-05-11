@@ -12,12 +12,13 @@ import { useEffect, useState } from "react";
 import { CategoryScale } from "chart.js";
 import Chart from "chart.js/auto";
 import Dropdown from "@/components/Dropdown";
+import { useDoctorNotificationPermission } from "@/hooks/doctor/useDoctorNotification";
+import { NotificationListener } from "@/components/NotificationListener";
 
 Chart.register(CategoryScale);
 
 export default function DoctorDashboardPage() {
   const { user } = AppState();
-  console.log(user);
 
   const getStatusCounts = (appointments) => {
     const counts = {
@@ -48,6 +49,36 @@ export default function DoctorDashboardPage() {
   );
 
   const { mutateAsync: updateAppointment } = useUpdateDoctorAppointment();
+  const { mutateAsync: notificationRequest } =
+    useDoctorNotificationPermission();
+
+  useEffect(() => {
+    // If no user, do nothing.
+    if (!user) return;
+
+    // If permission exist in backend, skip.
+    if (user.notificationPermission) return;
+
+    // Only prompt the browser if it hasn't been granted/denied yet.
+    if (Notification.permission === "default") {
+      Notification.requestPermission().then(async (result) => {
+        const granted = result === "granted";
+        try {
+          // persist granted result.
+          await notificationRequest({ granted });
+          user.notificationPermission = granted;
+        } catch (err) {
+          console.error("Failed to save notification permission:", err);
+        }
+      });
+    } else {
+      // Browser already has a verdict (granted/denied) but backend hasn't recorded it:
+      const granted = Notification.permission === "granted";
+      requestPermission({ granted }).catch((err) =>
+        console.error("Failed to sync existing permission:", err)
+      );
+    }
+  }, [user, notificationRequest]);
 
   useEffect(() => {
     if (data?.appointments) {
@@ -73,7 +104,7 @@ export default function DoctorDashboardPage() {
     }
   }, [data]);
 
-  if (isLoading) return <p>Loading appointments</p>;
+  if (isLoading || !user) return <p>Loading appointments</p>;
   if (isError) return <p>{error.message}</p>;
 
   const isFirstPage = page === 1;
@@ -87,11 +118,13 @@ export default function DoctorDashboardPage() {
             id: appointment._id,
             type: "button",
             label: "Confirm",
+            actionKey: "confirm",
           },
           {
             id: appointment._id,
             type: "button",
             label: "Cancel",
+            actionKey: "cancel",
           },
           {
             id: appointment._id,
@@ -106,11 +139,13 @@ export default function DoctorDashboardPage() {
             id: appointment._id,
             type: "button",
             label: "Complete",
+            actionKey: "complete",
           },
           {
             id: appointment._id,
             type: "button",
             label: "Cancel",
+            actionKey: "cancel",
           },
           {
             id: appointment._id,
@@ -136,6 +171,7 @@ export default function DoctorDashboardPage() {
 
   const confirmHandler = async (id) => {
     try {
+      console.log("Performing [confirm] action");
       await updateAppointment({
         id,
         status: "confirmed",
@@ -145,8 +181,10 @@ export default function DoctorDashboardPage() {
       console.error("error updating appointment to confirmed: ", error);
     }
   };
+
   const completedHandler = async (id) => {
     try {
+      console.log("Performing [complete] action");
       await updateAppointment({
         id,
         status: "completed",
@@ -156,8 +194,10 @@ export default function DoctorDashboardPage() {
       console.error("error updating appointment to completed: ", error);
     }
   };
+
   const cancelHandler = async (id) => {
     try {
+      console.log("Performing [cancel] action");
       await updateAppointment({
         id,
         status: "canceled",
@@ -255,12 +295,13 @@ export default function DoctorDashboardPage() {
                   <td className="py-4 px-6">
                     <Dropdown
                       actions={appointmentActions(appointment)}
-                      actionHandler={(actionLabel) => {
-                        if (actionLabel === "confirm") {
+                      actionHandler={(action) => {
+                        console.log("Clicked action:", action.id, action.actionKey);
+                        if (action.actionKey === "confirm") {
                           confirmHandler(appointment._id);
-                        } else if (actionLabel === "complete") {
+                        } else if (action.actionKey === "complete") {
                           completedHandler(appointment._id);
-                        } else {
+                        } else if (action.actionKey === "cancel") {
                           cancelHandler(appointment._id);
                         }
                       }}

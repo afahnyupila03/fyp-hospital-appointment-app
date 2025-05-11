@@ -1,5 +1,27 @@
 const { StatusCodes } = require("http-status-codes");
 const Notification = require("../../models/notification");
+const Doctor = require("../../models/doctor");
+
+exports.requestNotificationPermission = async (req, res) => {
+  try {
+    const doctorId = req.user.id;
+    const { granted } = req.body;
+
+    await Doctor.findByIdAndUpdate(doctorId, {
+      notificationPermission: granted,
+    });
+
+    res.status(StatusCodes.OK).json({
+      message: "Notification permission grant success",
+    });
+  } catch (error) {
+    console.error("error granting notification permission: ", error);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: "Failed to change user notification default state",
+      error: error.message,
+    });
+  }
+};
 
 exports.viewNotifications = async (req, res) => {
   try {
@@ -47,12 +69,6 @@ exports.viewNotification = async (req, res) => {
         .json({ message: "Unauthorized access. Please log in." });
     }
 
-    if (!id) {
-      return res
-        .status(StatusCodes.BAD_REQUEST)
-        .json({ message: "notification does not exist" });
-    }
-
     const notification = await Notification.findOne({
       _id: id,
       $or: [{ sender: doctorId }, { receiver: doctorId }],
@@ -61,10 +77,16 @@ exports.viewNotification = async (req, res) => {
       .populate("sender")
       .populate("appointment");
 
-    if (!appointment) {
+    if (!notification) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         message: "Notification not found",
       });
+    }
+
+    // Auto change notification status from 'read' to 'unread'.
+    if (notification.status === "unread") {
+      notification.status = "read";
+      await notification.save();
     }
 
     res.status(StatusCodes.OK).json({
@@ -92,22 +114,20 @@ exports.updateNotification = async (req, res) => {
         .json({ message: "Unauthorized access. Please log in." });
     }
 
-    if (!id) {
-      return res
-        .status(StatusCodes.BAD_REQUEST)
-        .json({ message: "notification does not exist" });
+    const allowedStatuses = ["read", "unread"];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: "Invalid status value. Must be 'read' or 'unread'.",
+      });
     }
 
-    const notification = await Notification.findOne({
-      _id: id,
-      sender: doctorId,
-    })
+    const notification = await Notification.findById(id)
       .populate("receiver")
       .populate("appointment");
 
     if (!notification) {
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        message: "notification does not exist",
+      return res.status(StatusCodes.NOT_FOUND).json({
+        message: "Notification not found.",
       });
     }
 

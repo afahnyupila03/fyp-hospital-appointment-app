@@ -2,6 +2,7 @@ const { StatusCodes } = require("http-status-codes");
 
 const Appointment = require("../../models/appointment");
 const Notification = require("../../models/notification");
+const Socket = require("../../socket");
 
 exports.viewAppointments = async (req, res) => {
   try {
@@ -22,8 +23,6 @@ exports.viewAppointments = async (req, res) => {
     const count = await Appointment.countDocuments({ doctorId });
     const totalPages = Math.ceil(count / limit);
     const currentPage = parseInt(page);
-
-    
 
     console.log("APPOINTMENTS: ", appointments);
 
@@ -88,6 +87,8 @@ exports.viewAppointment = async (req, res) => {
 
 exports.updateAppointment = async (req, res) => {
   try {
+    const io = Socket.getIo();
+
     const { id } = req.params;
     const { status } = req.body;
     const doctorId = req.user.id;
@@ -116,6 +117,10 @@ exports.updateAppointment = async (req, res) => {
 
     const savedNotification = await notification.save();
     appointment.notifications.push(savedNotification._id);
+
+    // emit notification socket.
+    console.log("➡️ [Server] Emitting new-notification", savedNotification._id);
+    io.emit("new-notification", savedNotification);
 
     // Save the updated appointment
     const updatedAppointment = await appointment.save();

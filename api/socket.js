@@ -1,25 +1,25 @@
-const { Server } = require('socket.io')
+const { Server } = require("socket.io");
 
-let io
+let io;
 
 module.exports = {
-  init: httpServer => {
+  init: (httpServer) => {
     if (!io) {
       // Ensure init is only called once.
       io = new Server(httpServer, {
         cors: {
-          origin: '*',
-          methods: ['GET', 'PUT', 'POST', 'DELETE']
-        }
-      })
-      console.log('socket.io init success')
+          origin: "http://localhost:3000",
+          methods: ["GET", "PUT", "POST", "DELETE"],
+        },
+      });
+      console.log("socket.io init success");
     }
-    return io
+    return io;
   },
 
   getIo: () => {
-    if (!io) throw new Error('socket.io init failure')
+    if (!io) throw new Error("socket.io init failure");
 
-    return io
-  }
-}
+    return io;
+  },
+};
