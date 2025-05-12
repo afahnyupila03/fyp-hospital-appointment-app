@@ -2,8 +2,16 @@ import {
   updatePatientNotificationStatus,
   viewPatientNotification,
   viewPatientNotifications,
+  requestPatientNotificationPermission,
 } from "@/api/appointment/patient/patientNotificationService";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+export const usePatientNotificationPermission = () => {
+  return useMutation({
+    mutationFn: ({ granted }) =>
+      requestPatientNotificationPermission({ granted }),
+  });
+};
 
 export const usePatientNotifications = () => {
   return useQuery({

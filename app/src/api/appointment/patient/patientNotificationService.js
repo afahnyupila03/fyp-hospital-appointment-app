@@ -12,6 +12,23 @@ const getHeaders = () => {
   };
 };
 
+export const requestPatientNotificationPermission = async (granted) => {
+  const res = await fetch(
+    "http://localhost:4000/patient/notification-permission",
+    {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(granted),
+    }
+  );
+
+  const data = await res.json();
+
+  if (!res.ok) throw new Error(data.message || (data.message && data.error));
+
+  return data.message;
+};
+
 export const viewPatientNotifications = async () => {
   const res = await fetch("http://localhost:4000/patient/notifications", {
     headers: getHeaders(),

@@ -1,10 +1,33 @@
 const { StatusCodes } = require("http-status-codes");
 
 const Notification = require("../../models/notification");
+const User = require("../../models/user");
 
-export const notifications = async (req, res) => {
+exports.requestNotificationPermission = async () => {
   try {
     const patientId = req.user.id;
+    const { granted } = req.body;
+
+    await User.findByIdAndUpdate(patientId, {
+      notificationPermission: granted,
+    });
+
+    res.status(StatusCodes.OK).json({
+      message: "Notification permission grant success",
+    });
+  } catch (error) {
+    console.error("error granting notification permission: ", error);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: "Failed to change user notification default state",
+      error: error.message,
+    });
+  }
+};
+
+exports.notifications = async (req, res) => {
+  try {
+    const patientId = req.user.id;
+    const { page = 1, limit = 10 } = req.query;
 
     if (!patientId) {
       return res
@@ -16,17 +39,24 @@ export const notifications = async (req, res) => {
       $or: [{ sender: patientId }, { receiver: patientId }],
     })
       .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
       .populate("receiver")
+      .populate("sender")
       .populate("appointment");
 
     const count = await Notification.countDocuments({
       $or: [{ sender: patientId }, { receiver: patientId }],
     });
+    const totalPage = Math.ceil(count / limit);
+    const currentPage = parseInt(page);
 
     res.status(StatusCodes.OK).json({
       message: "patient notifications",
       notifications,
       count,
+      totalPage,
+      currentPage,
     });
   } catch (error) {
     console.error("server error querying patient notifications: ", error);
@@ -37,7 +67,7 @@ export const notifications = async (req, res) => {
   }
 };
 
-export const notification = async (req, res) => {
+exports.notification = async (req, res) => {
   try {
     const patientId = req.user.id;
     const { id } = req.params;
@@ -48,24 +78,29 @@ export const notification = async (req, res) => {
         .json({ message: "Unauthorized access. Please log in." });
     }
 
-    if (!id) {
-      return res
-        .status(StatusCodes.BAD_REQUEST)
-        .json({ message: "notification does not exist" });
-    }
-
     const notifications = await Notification.findOne({
       _id: id,
       $or: [{ sender: patientId }, { receiver: patientId }],
     })
       .populate("receiver")
-
+      .populate("sender")
       .populate("appointment");
+
+    if (!notification) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: "Notification does not exist",
+      });
+    }
+
+    // Auto change notification status from 'read' to 'unread'.
+    if (notification.status === "unread") {
+      notification.status = "read";
+      await notification.save();
+    }
 
     res.status(StatusCodes.OK).json({
       message: "patient notification",
       notifications,
-      count,
     });
   } catch (error) {
     console.error("server error querying patient notification: ", error);
@@ -76,7 +111,7 @@ export const notification = async (req, res) => {
   }
 };
 
-export const updateNotification = async (req, res) => {
+exports.updateNotification = async (req, res) => {
   try {
     const patientId = req.user.id;
     const { id } = req.params;

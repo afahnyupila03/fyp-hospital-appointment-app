@@ -26,6 +26,7 @@ exports.requestNotificationPermission = async (req, res) => {
 exports.viewNotifications = async (req, res) => {
   try {
     const doctorId = req.user.id;
+    const { page = 1, limit = 10 } = req.query;
 
     if (!doctorId) {
       return res.status(StatusCodes.UNAUTHORIZED).json({
@@ -37,17 +38,24 @@ exports.viewNotifications = async (req, res) => {
       $or: [{ sender: doctorId }, { receiver: doctorId }],
     })
       .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
       .populate("receiver")
+      .populate("sender")
       .populate("appointment");
 
     const count = await Notification.countDocuments({
       $or: [{ sender: doctorId }, { receiver: doctorId }],
     });
+    const totalPages = Math.ceil(count / limit);
+    const currentPage = parseInt(page);
 
     res.status(StatusCodes.OK).json({
       message: "doctor notifications",
       notifications,
       count,
+      totalPages,
+      currentPage,
     });
   } catch (error) {
     console.error("view notifications controller error: ", error);
@@ -165,7 +173,7 @@ exports.deleteNotification = async (req, res) => {
     } else {
       await Notification.deleteMany({ _id: { $in: ids } });
     }
-    console.log('notification delete success')
+    console.log("notification delete success");
 
     res.status(StatusCodes.OK).json({
       message: "Notification(s) delete success",
