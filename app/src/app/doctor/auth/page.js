@@ -1,6 +1,7 @@
 "use client";
 
 import CustomInput from "@/components/CustomInput";
+import { signinSchema } from "@/schema/schema";
 import { AppState } from "@/store/context";
 import { Form, Formik } from "formik";
 import { useRouter } from "next/navigation";
@@ -33,7 +34,7 @@ export default function DoctorAuthPage() {
     } catch (error) {
       console.error("Error login to doctor account: ", error);
       actions.setSubmitting(false);
-      throw error;
+      throw new Error(error);
     }
   };
 
@@ -43,6 +44,7 @@ export default function DoctorAuthPage() {
         email: "",
         password: "",
       }}
+      validationSchema={signinSchema}
       onSubmit={loginDoctorHandler}
     >
       {({
