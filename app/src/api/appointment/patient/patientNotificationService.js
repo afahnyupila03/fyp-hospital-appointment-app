@@ -41,9 +41,13 @@ export const viewPatientNotifications = async (page, limit) => {
 
   if (!res.ok) throw new Error(data.message || (data.error && data.message))
 
-  const { notifications, count } = data
+  
+  const notifications = data.notifications;
+  const count = data.count;
+  const currentPage = data.currentPage;
+  const totalPages = data.totalPages
 
-  return { notifications, count }
+  return { notifications, count, currentPage, totalPages }
 }
 
 export const viewPatientNotification = async id => {

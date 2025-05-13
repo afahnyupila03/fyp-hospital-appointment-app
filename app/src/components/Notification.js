@@ -69,13 +69,14 @@ export default function Notification ({
   notificationHandler,
   deleteHandler
 }) {
+
   const role = localStorage.getItem('role')
 
   return (
     <Menu as='div' className='relative inline-block text-left'>
       <div
         title={`${notificationCounter} unread message${
-          notificationCounter > 0 && 's'
+          notificationCounter > 0 ? 's' : ''
         }`}
         style={styles.notificationWrapper}
       >

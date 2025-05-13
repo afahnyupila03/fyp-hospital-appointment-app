@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Dialog, DialogPanel, PopoverGroup } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { AppState } from '@/store/context'
@@ -11,10 +11,19 @@ import {
   useUpdateDoctorNotification,
   useDeleteDoctorNotification
 } from '@/hooks/doctor/useDoctorNotification'
+
+import {
+  usePatientNotifications,
+  useUpdatePatientNotification,
+  useDeletePatientNotification
+} from '@/hooks/patient/usePatientNotification'
+
 import Notification from '@/components/Notification'
 
 const userLinks = user => {
   if (!user) return []
+
+  const role = user.role
 
   const routes = {
     admin: [
@@ -25,21 +34,49 @@ const userLinks = user => {
     doctor: [{ name: 'Appointments', href: '/doctor/dashboard/appointments' }],
     patient: [
       { name: 'Book Appointment', href: '/patient/dashboard/book-appointment' },
-      { name: 'Appointments', href: '/patient/dashboard//appointments' },
-      { name: 'Doctors', href: '/patient/dashboard//doctors' }
+      { name: 'Appointments', href: '/patient/dashboard/appointments' },
+      { name: 'Doctors', href: '/patient/dashboard/doctors' }
     ]
   }
 
-  return routes[user.role] || []
+  return routes[role] || []
+}
+
+const redirectByUserRole = user => {
+  const role = user.role
+
+  if (!user) return '/'
+
+  const roleRoutes = {
+    admin: '/admin/dashboard',
+    doctor: '/doctor/dashboard',
+    patient: '/patient/dashboard'
+  }
+
+  return roleRoutes[role] || '/'
 }
 
 export const Header = () => {
   const { user, loading } = AppState()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  const { data, isLoading, refetch } = useDoctorNotifications()
+  const {
+    data: doctorNotifications,
+    isLoading: doctorLoading,
+    refetch: refetchDoctorNotifications
+  } = useDoctorNotifications()
 
-  const notifications = data?.notifications || []
+  const {
+    data: patientNotifications,
+    isLoading: patientLoading,
+    refetch: refetchPatientNotifications
+  } = usePatientNotifications()
+
+  const notifications =
+    doctorNotifications?.notifications ??
+    patientNotifications?.notifications ??
+    []
+
   const notificationCount =
     notifications?.filter(notification => notification.status === 'unread')
       .length || 0
@@ -54,7 +91,7 @@ export const Header = () => {
         status: 'read'
       })
       console.log(`notification status updated to [read] with id ${id}`)
-      refetch()
+      refetchDoctorNotifications()
     } catch (error) {
       console.error("error updating notification status to ['read'] :", error)
       throw new Error(error)
@@ -65,32 +102,18 @@ export const Header = () => {
     console.log('Performing delete action...')
     await deleteNotification({ id })
     console.log('Delete doctor notification success')
-    refetch()
-  }
-
-  const redirectByUserRole = role => {
-    let url
-    switch (role) {
-      case 'admin':
-        url = '/admin/dashboard'
-        break
-      case 'doctor':
-        url = '/doctor/dashboard'
-        break
-      case 'patient':
-        url = '/patient/dashboard'
-        break
-      default:
-        url = undefined
-        break
-    }
-
-    return url
+    refetchDoctorNotifications()
   }
 
   const links = userLinks(user)
 
   if (loading) return <div>Loading.....</div>
+  console.log(
+    'patient notifications: ',
+    notifications,
+    ' count: ',
+    notificationCount
+  )
 
   return (
     <header className='bg-white'>
@@ -100,7 +123,7 @@ export const Header = () => {
       >
         <div className='flex lg:flex-1'>
           {user ? (
-            <Link href={redirectByUserRole(user.role)} className='-m-1.5 p-1.5'>
+            <Link href={redirectByUserRole(user)} className='-m-1.5 p-1.5'>
               <span className='sr-only'>CareConnect</span>
               <img alt='' src='../favicon.ico' className='h-8 w-auto' />
             </Link>
@@ -207,7 +230,7 @@ export const Header = () => {
                 {user && (user.role === 'doctor' || user.role === 'patient') && (
                   <>
                     <Notification
-                      notifications={data?.notifications}
+                      notifications={notifications}
                       notificationCounter={notificationCount}
                     />
 
