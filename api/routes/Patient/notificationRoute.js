@@ -14,7 +14,7 @@ module.exports = (router) => {
     requestNotificationPermission
   );
   router.get("/notifications", auth, restrictTo("patient"), notifications);
-  router.get("/notification", auth, restrictTo("patient"), notification);
+  router.get("/notification/:id", auth, restrictTo("patient"), notification);
   router.put(
     "/update-notification/:id",
     auth,

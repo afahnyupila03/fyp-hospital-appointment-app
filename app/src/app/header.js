@@ -47,7 +47,7 @@ export const Header = () => {
   const { user, loading } = AppState();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const { data, isLoading } = useDoctorNotifications();
+  const { data, isLoading, refetch } = useDoctorNotifications();
 
   const notifications = data?.notifications || [];
   const notificationCount =
@@ -64,6 +64,7 @@ export const Header = () => {
         status: "read",
       });
       console.log(`notification status updated to [read] with id ${id}`);
+      refetch()
     } catch (error) {
       console.error("error updating notification status to ['read'] :", error);
       throw new Error(error);
@@ -74,6 +75,7 @@ export const Header = () => {
     console.log("Performing delete action...");
     await deleteNotification({id});
     console.log("Delete doctor notification success");
+    refetch()
   };
 
   const redirectByUserRole = (role) => {

@@ -26,7 +26,7 @@ export default function DoctorAuthPage() {
       if (password.length < 5)
         throw new Error("Password must be at least 6 characters");
 
-      const doctor = await signinHandler(email, password, role);
+       await signinHandler(email, password, role);
       console.log("doctor success login...");
       router.replace("/doctor/dashboard");
       actions.resetForm();

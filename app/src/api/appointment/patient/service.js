@@ -1,123 +1,126 @@
 const getHeaders = () => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem('token')
   if (!token)
     throw new Error(
-      "Invalid or expired user token, please authenticate user again."
-    );
+      'Invalid or expired user token, please authenticate user again.'
+    )
 
   return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
-};
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`
+  }
+}
 
-export const createAppointmentService = async (formData) => {
-  const res = await fetch("http://localhost:4000/patient/create-appoinment", {
-    method: "POST",
+export const createAppointmentService = async formData => {
+  const res = await fetch('http://localhost:4000/patient/create-appoinment', {
+    method: 'POST',
     headers: getHeaders(),
-    body: JSON.stringify(formData),
-  });
-  if (!res.ok) throw new Error("Error creating patient appointment");
+    body: JSON.stringify(formData)
+  })
+  if (!res.ok) throw new Error('Error creating patient appointment')
 
-  const result = await res.json();
-  const createdAppointment = result.data;
+  const result = await res.json()
+  const createdAppointment = result.data
 
-  return createdAppointment;
-};
+  return createdAppointment
+}
 
-export const viewAppointmentsService = async () => {
-  const res = await fetch("http://localhost:4000/patient/view-appointments", {
-    headers: getHeaders(),
-  });
-  if (!res.ok) throw new Error("Error fetching doctors appointments");
+export const viewAppointmentsService = async (page, limit) => {
+  const res = await fetch(
+    `http://localhost:4000/patient/view-appointments?page=${page}&limit=${limit}`,
+    {
+      headers: getHeaders()
+    }
+  )
+  if (!res.ok) throw new Error('Error fetching doctors appointments')
 
-  const data = await res.json();
-  const appointments = data.appointments;
+  const data = await res.json()
+  const appointments = data.appointments
 
-  return appointments;
-};
+  return appointments
+}
 
-export const viewAppointmentService = async (id) => {
+export const viewAppointmentService = async id => {
   const res = await fetch(
     `http://localhost:4000/patient/view-appointment/${id}`,
     {
-      headers: getHeaders(),
+      headers: getHeaders()
     }
-  );
+  )
   console.log('patient appointment res: ', res)
-  if (!res.ok) throw new Error("Error fetching doctor appointment");
-  const data = await res.json();
-  const appointment = data.appointment;
+  if (!res.ok) throw new Error('Error fetching doctor appointment')
+  const data = await res.json()
+  const appointment = data.appointment
 
-  return appointment;
-};
+  return appointment
+}
 
 export const updateAppointmentService = async (id, formData) => {
   const res = await fetch(
     `http://localhost:4000/patient/update-appointment/${id}`,
     {
-      method: "PUT",
+      method: 'PUT',
       headers: getHeaders(),
-      body: JSON.stringify(formData),
+      body: JSON.stringify(formData)
     }
-  );
-  if (!res.ok) throw new Error("Error fetching doctor appointment");
-  const data = await res.json();
-  const updatedAppointment = data.updatedAppointment;
+  )
+  if (!res.ok) throw new Error('Error fetching doctor appointment')
+  const data = await res.json()
+  const updatedAppointment = data.updatedAppointment
 
-  return updatedAppointment;
-};
+  return updatedAppointment
+}
 
 export const viewDoctorsService = async () => {
   try {
-    const res = await fetch("http://localhost:4000/patient/doctors", {
-      headers: getHeaders(),
-    });
-    console.log("doctors res: ", res);
+    const res = await fetch('http://localhost:4000/patient/doctors', {
+      headers: getHeaders()
+    })
+    console.log('doctors res: ', res)
 
     if (!res.ok) {
-      throw new Error("Error fetching doctors from servers");
+      throw new Error('Error fetching doctors from servers')
     }
-    const data = await res.json();
+    const data = await res.json()
 
-    const doctors = data.doctors;
-    console.log("doctors data: ", doctors);
+    const doctors = data.doctors
+    console.log('doctors data: ', doctors)
 
-    return doctors;
+    return doctors
   } catch (error) {
-    console.error("Admin-Doctors: ", error.message);
-    throw error;
+    console.error('Admin-Doctors: ', error.message)
+    throw error
     // return []; // safe fallback
   }
-};
+}
 
-export const viewDoctorService = async (id) => {
+export const viewDoctorService = async id => {
   try {
     const res = await fetch(`http://localhost:4000/patient/doctor/${id}`, {
-      headers: getHeaders(),
-    });
+      headers: getHeaders()
+    })
 
     if (!res.ok) {
-      throw new Error("Error fetching doctor profile from server");
+      throw new Error('Error fetching doctor profile from server')
     }
 
-    const data = await res.json();
-    const doctor = data.doctor;
-    console.log("get doctor service: ", doctor);
+    const data = await res.json()
+    const doctor = data.doctor
+    console.log('get doctor service: ', doctor)
 
     if (Array.isArray(doctor)) {
       return {
         id: doctor._id,
-        name: doctor.name,
-      };
+        name: doctor.name
+      }
     }
 
     return {
       id: doctor._id,
-      name: doctor.name,
-    };
+      name: doctor.name
+    }
   } catch (error) {
-    console.error("doctor query error: ", error.message);
-    throw error;
+    console.error('doctor query error: ', error.message)
+    throw error
   }
-};
+}

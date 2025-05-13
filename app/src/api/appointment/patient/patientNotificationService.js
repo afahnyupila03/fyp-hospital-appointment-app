@@ -1,77 +1,80 @@
 const getHeaders = () => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem('token')
 
   if (!token)
     throw new Error(
-      "Invalid or expired user token, please authenticate user again."
-    );
+      'Invalid or expired user token, please authenticate user again.'
+    )
 
   return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
-};
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`
+  }
+}
 
-export const requestPatientNotificationPermission = async (granted) => {
+export const requestPatientNotificationPermission = async granted => {
   const res = await fetch(
-    "http://localhost:4000/patient/notification-permission",
+    'http://localhost:4000/patient/notification-permission',
     {
-      method: "POST",
+      method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify(granted),
+      body: JSON.stringify(granted)
     }
-  );
+  )
 
-  const data = await res.json();
+  const data = await res.json()
 
-  if (!res.ok) throw new Error(data.message || (data.message && data.error));
+  if (!res.ok) throw new Error(data.message || (data.message && data.error))
 
-  return data.message;
-};
+  return data.message
+}
 
-export const viewPatientNotifications = async () => {
-  const res = await fetch("http://localhost:4000/patient/notifications", {
-    headers: getHeaders(),
-  });
+export const viewPatientNotifications = async (page, limit) => {
+  const res = await fetch(
+    `http://localhost:4000/patient/notifications?page=${page}&limit=${limit}`,
+    {
+      headers: getHeaders()
+    }
+  )
 
-  const data = await res.json();
+  const data = await res.json()
 
-  if (!res.ok) throw new Error(data.message || (data.error && data.message));
+  if (!res.ok) throw new Error(data.message || (data.error && data.message))
 
-  const { notifications, count } = data;
+  const { notifications, count } = data
 
-  return { notifications, count };
-};
+  return { notifications, count }
+}
 
-export const viewPatientNotification = async (id) => {
+export const viewPatientNotification = async id => {
   const res = await fetch(`http://localhost:4000/patient/notification/${id}`, {
-    headers: getHeaders(),
-  });
+    headers: getHeaders()
+  })
 
-  const data = await res.json();
+  const data = await res.json()
 
-  if (!res.ok) throw new Error(data.message || (data.error && data.message));
+  if (!res.ok) throw new Error(data.message || (data.error && data.message))
 
-  const { notification } = data;
+  const { notification } = data
 
-  return notification;
-};
+  return notification
+}
 
 export const updatePatientNotificationStatus = async (id, payload) => {
   const res = await fetch(
     `http://localhost:4000/patient/update-notification/${id}`,
     {
-      method: "PUT",
+      method: 'PUT',
       headers: getHeaders(),
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payload)
     }
-  );
+  )
 
-  const data = await res.json();
+  const data = await res.json()
 
-  if (!res.ok) throw new Error(data.message || (data.error && data.message));
+  if (!res.ok) throw new Error(data.message || (data.error && data.message))
 
-  const { notification } = data;
+  const { notification } = data
 
-  return notification;
-};
+  return notification
+}

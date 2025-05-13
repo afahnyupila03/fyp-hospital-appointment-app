@@ -108,7 +108,7 @@ exports.updateAppointment = async (req, res) => {
 
     // Create a notification to send to the patient.
     const notification = new Notification({
-      sender: doctorId,
+      sender: appointment.doctorId,
       receiver: appointment.patientId,
       type: "appointment_status_update",
       message: `Your appointment status has been updated to "${status}"`,
