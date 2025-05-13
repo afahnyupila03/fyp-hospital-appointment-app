@@ -1,54 +1,64 @@
 const getHeaders = () => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem('token')
   if (!token)
     throw new Error(
-      "Invalid or expired user token, please authenticate user again."
-    );
+      'Invalid or expired user token, please authenticate user again.'
+    )
 
   return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
-};
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`
+  }
+}
 
-export const viewAppointmentsService = async () => {
-  const res = await fetch("http://localhost:4000/doctor/view-appointments", {
-    headers: getHeaders(),
-  });
-  if (!res.ok) throw new Error("Error fetching doctors appointments");
+export const viewAppointmentsService = async (page, limit) => {
+  const res = await fetch(
+    `http://localhost:4000/doctor/view-appointments?page=${page}&limit=${limit}`,
+    {
+      headers: getHeaders()
+    }
+  )
 
-  const data = await res.json();
-  const appointments = data.appointments;
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.message)
 
-  return appointments;
-};
+  const appointments = data.appointments
+  const count = data.count
+  const currentPage = data.currentPage
+  const totalPages = data.totalPages
 
-export const viewAppointmentService = async (id) => {
+  return { appointments, count, currentPage, totalPages }
+}
+
+export const viewAppointmentService = async id => {
   const res = await fetch(
     `http://localhost:4000/doctor/view-appointment/${id}`,
     {
-      headers: getHeaders(),
+      headers: getHeaders()
     }
-  );
-  if (!res.ok) throw new Error("Error fetching doctor appointment");
-  const data = await res.json();
-  const appointment = data.appointment;
+  )
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.message)
 
-  return appointment;
-};
+  const appointment = data.appointment
 
-export const updateAppointmentService = async (id, formData) => {
+  return appointment
+}
+
+export const updateAppointmentService = async (id, status) => {
   const res = await fetch(
     `http://localhost:4000/doctor/update-appointment/${id}`,
     {
-      method: "PUT",
+      method: 'PUT',
       headers: getHeaders(),
-      body: JSON.stringify(formData),
+      body: JSON.stringify(status)
     }
-  );
-  if (!res.ok) throw new Error("Error fetching doctor appointment");
-  const data = await res.json();
-  const updatedAppointment = data.updatedAppointment;
+  )
 
-  return updatedAppointment;
-};
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.message)
+
+  const updatedAppointment = data.updatedAppointment
+
+  return updatedAppointment
+}

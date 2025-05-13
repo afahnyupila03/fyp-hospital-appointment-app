@@ -1,4 +1,3 @@
-// const createError = require('http-errors')
 const express = require("express");
 const path = require("path");
 const cookieParser = require("cookie-parser");
@@ -13,15 +12,17 @@ const cors = require("cors");
 
 const adminRoutes = require("./routes/Admin/index");
 const doctorRoutes = require("./routes/Doctor/index");
-const doctorMetaRoute = require('./routes/meta')
+const doctorMetaRoute = require("./routes/meta");
 const patientRoutes = require("./routes/Patient/index");
 
 const app = express();
-
 const httpServer = createServer(app);
-// Init socket.io
-Socket.init(httpServer);
 
+// Init socket.io
+const io = Socket.init(httpServer);
+app.set("io", io);
+
+// Middlewares.
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -29,7 +30,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(bodyParser.json());
 
-// CORS Middleware.
+// CORS.
 app.use(
   cors({
     origin: "http://localhost:3000",
@@ -39,8 +40,8 @@ app.use(
   })
 );
 
-// Route registration
-app.use('/api/meta', doctorMetaRoute)
+// Routes.
+app.use("/api/meta", doctorMetaRoute);
 app.use("/admin", adminRoutes);
 app.use("/doctor", doctorRoutes);
 app.use("/patient", patientRoutes);
@@ -75,8 +76,8 @@ mongoose
     httpServer.listen(4000, () => {
       const io = Socket.getIo();
       io.on("connection", (socket) => {
-        console.log("Socket: ", socket);
-        console.log("Client connected");
+        console.log("Socket id: ", socket.id);
+        console.log("Server connected");
       });
     });
   })

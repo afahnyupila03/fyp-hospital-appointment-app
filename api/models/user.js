@@ -36,7 +36,12 @@ const userSchema = new Schema(
       type: Boolean,
       default: true,
     },
-    terminatedAt: Date
+
+    notificationPermission: {
+      type: Boolean,
+      default: false,
+    },
+    terminatedAt: Date,
   },
   { timestamps: true }
 );

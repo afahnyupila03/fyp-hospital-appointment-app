@@ -141,7 +141,7 @@ export const AppProvider = ({ children }) => {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      if (!res.ok) throw new Error(data.error);
 
       const { token } = data;
       let { userData } = data;
@@ -172,7 +172,7 @@ export const AppProvider = ({ children }) => {
     } catch (error) {
       dispatch({
         type: CONSTANTS.ERROR,
-        payload: { error: error.message },
+        payload: { error: error },
       });
       throw error;
     }
@@ -191,7 +191,7 @@ export const AppProvider = ({ children }) => {
 
       const data = await res.json();
       console.log("context data: ", data);
-      if (!res.ok) throw new Error(data.message);
+      if (!res.ok) throw new Error(data.message ||data.error);
 
       const { token } = data;
       let { userData } = data;
@@ -223,7 +223,7 @@ export const AppProvider = ({ children }) => {
     } catch (error) {
       dispatch({
         type: CONSTANTS.ERROR,
-        payload: { error: error.message },
+        payload: { error: error },
       });
       throw error;
     }

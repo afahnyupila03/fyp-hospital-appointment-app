@@ -1,10 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogPanel, PopoverGroup } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { AppState } from "@/store/context";
 import Link from "next/link";
+
+import {
+  useDoctorNotifications,
+  useUpdateDoctorNotification,
+  useDeleteDoctorNotification,
+} from "@/hooks/doctor/useDoctorNotification";
+import Notification from "@/components/Notification";
 
 const userLinks = (user) => {
   if (user) {
@@ -27,7 +34,7 @@ const userLinks = (user) => {
       return [
         {
           name: "Appointments",
-          href: "dashboard/doctor/appointments",
+          href: "dashboard/appointments",
         },
       ];
     } else if (user.role === "patient") {
@@ -40,7 +47,36 @@ export const Header = () => {
   const { user, loading } = AppState();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  if (loading) return <div>Loading.....</div>;
+  const { data, isLoading, refetch } = useDoctorNotifications();
+
+  const notifications = data?.notifications || [];
+  const notificationCount =
+    notifications?.filter((notification) => notification.status === "unread")
+      .length || 0;
+
+  const { mutateAsync: updateNotification } = useUpdateDoctorNotification();
+  const { mutateAsync: deleteNotification } = useDeleteDoctorNotification();
+
+  const markAsReadHandler = async (id) => {
+    try {
+      await updateNotification({
+        id,
+        status: "read",
+      });
+      console.log(`notification status updated to [read] with id ${id}`);
+      refetch()
+    } catch (error) {
+      console.error("error updating notification status to ['read'] :", error);
+      throw new Error(error);
+    }
+  };
+
+  const deleteNotificationHandler = async (id) => {
+    console.log("Performing delete action...");
+    await deleteNotification({id});
+    console.log("Delete doctor notification success");
+    refetch()
+  };
 
   const redirectByUserRole = (role) => {
     let url;
@@ -63,6 +99,8 @@ export const Header = () => {
   };
 
   const links = userLinks(user);
+
+  if (loading) return <div>Loading.....</div>;
 
   return (
     <header className="bg-white">
@@ -110,8 +148,23 @@ export const Header = () => {
             ))}
         </PopoverGroup>
 
-        <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-          {user && <button type="button">Logout</button>}
+        <div className="hidden lg:flex lg:flex-1 lg:justify-end items-center">
+          {user && (user.role === "doctor" || user.role === "patient") && (
+            <div className="flex items-center justify-center gap-4">
+              <Notification
+                notifications={notifications}
+                notificationCounter={notificationCount}
+                notificationHandler={markAsReadHandler}
+                deleteHandler={deleteNotificationHandler}
+              />
+              <button
+                type="button"
+                className="px-4 py-2 bg-red-500 text-white rounded"
+              >
+                Logout big
+              </button>
+            </div>
+          )}
         </div>
       </nav>
 
@@ -161,7 +214,17 @@ export const Header = () => {
                   ))}
               </div>
               <div className="py-6">
-                {user && <button type="button">Logout</button>}
+                {user &&
+                  (user.role === "doctor" || user.role === "patient") && (
+                    <>
+                      <Notification
+                        notifications={data?.notifications}
+                        notificationCounter={notificationCount}
+                      />
+
+                      <button type="button">Logout</button>
+                    </>
+                  )}
               </div>
             </div>
           </div>
