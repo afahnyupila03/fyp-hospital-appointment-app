@@ -41,10 +41,9 @@ export const viewPatientNotifications = async (page, limit) => {
 
   if (!res.ok) throw new Error(data.message || (data.error && data.message))
 
-  
-  const notifications = data.notifications;
-  const count = data.count;
-  const currentPage = data.currentPage;
+  const notifications = data.notifications
+  const count = data.count
+  const currentPage = data.currentPage
   const totalPages = data.totalPages
 
   return { notifications, count, currentPage, totalPages }
@@ -81,4 +80,20 @@ export const updatePatientNotificationStatus = async (id, payload) => {
   const { notification } = data
 
   return notification
+}
+
+export const deletePatientNotification = async id => {
+  const res = await fetch(
+    `http://localhost:4000/patient/delete-notification/${id}`,
+    {
+      method: 'DELETE',
+      headers: getHeaders()
+    }
+  )
+
+  const data = await res.json()
+
+  if (!res.ok) throw new Error(data.message)
+
+  return data
 }

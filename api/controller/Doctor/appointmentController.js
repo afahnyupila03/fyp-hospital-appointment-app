@@ -2,6 +2,8 @@ const { StatusCodes } = require('http-status-codes')
 
 const Appointment = require('../../models/appointment')
 const Notification = require('../../models/notification')
+const Doctor = require('../../models/doctor')
+const User = require('../../models/user')
 const Socket = require('../../socket')
 
 exports.viewAppointments = async (req, res) => {
@@ -93,6 +95,15 @@ exports.updateAppointment = async (req, res) => {
     const { status } = req.body
     const doctorId = req.user.id
 
+    const doctorName = await Doctor.findById(doctorId)
+    const name = doctorName.name
+
+    if (!doctorId) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        message: 'Action not allowed. Authenticate account to perform action'
+      })
+    }
+
     const appointment = await Appointment.findOne({
       _id: id,
       doctorId: doctorId
@@ -118,22 +129,31 @@ exports.updateAppointment = async (req, res) => {
       sender: appointment.doctorId,
       receiver: appointment.patientId,
       type: 'appointment_status_update',
-      message: `Doctor,${appointment.doctorId.name} updated your appointment status to "${status}"`,
+      message: `${name} updated your appointment status to "${status}"`,
       appointment: appointment._id
     })
 
     const [savedDoctorNotification, savedPatientNotification] =
-      await Promise.all([doctorNotification, patientNotification])
+      await Promise.all([doctorNotification.save(), patientNotification.save()])
 
-    appointment.notifications.push(savedDoctorNotification._id)
-    appointment.notifications.push(savedPatientNotification._id)
-
-    // emit notification socket.
-    console.log('➡️ [Server] Emitting new-notification', savedNotification._id)
-    io.emit('new-notification', savedNotification)
+    appointment.notifications.push(
+      savedDoctorNotification._id,
+      savedPatientNotification._id
+    )
 
     // Save the updated appointment
     const updatedAppointment = await appointment.save()
+
+    await User.findByIdAndUpdate(appointment.patientId, {
+      $push: { notifications: savedPatientNotification }
+    })
+    await Doctor.findByIdAndUpdate(doctorId, {
+      $push: { notifications: savedDoctorNotification }
+    })
+
+    // Emit notifications for doctor and patient.
+    io.emit('new-notification', savedDoctorNotification)
+    io.emit('new-notification', savedPatientNotification)
 
     res.status(StatusCodes.OK).json({
       message: 'patient appointment update success',

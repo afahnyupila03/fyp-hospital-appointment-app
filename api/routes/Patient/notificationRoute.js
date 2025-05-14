@@ -1,24 +1,31 @@
-const { auth, restrictTo } = require("../../middlewares/auth");
+const { auth, restrictTo } = require('../../middlewares/auth')
 const {
   notification,
   notifications,
   updateNotification,
-  requestNotificationPermission,
-} = require("../../controller/Patient/notificationController");
+  deleteNotification,
+  requestNotificationPermission
+} = require('../../controller/Patient/notificationController')
 
-module.exports = (router) => {
+module.exports = router => {
   router.post(
-    "notification-permission",
+    'notification-permission',
     auth,
-    restrictTo("patient"),
+    restrictTo('patient'),
     requestNotificationPermission
-  );
-  router.get("/notifications", auth, restrictTo("patient"), notifications);
-  router.get("/notification/:id", auth, restrictTo("patient"), notification);
+  )
+  router.get('/notifications', auth, restrictTo('patient'), notifications)
+  router.get('/notification/:id', auth, restrictTo('patient'), notification)
   router.put(
-    "/update-notification/:id",
+    '/update-notification/:id',
     auth,
-    restrictTo("patient"),
+    restrictTo('patient'),
     updateNotification
-  );
-};
+  )
+  router.delete(
+    '/delete-notification/:id',
+    auth,
+    restrictTo('patient'),
+    deleteNotification
+  )
+}

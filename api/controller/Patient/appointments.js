@@ -4,6 +4,7 @@ const Appointment = require('../../models/appointment')
 const User = require('../../models/user')
 const Doctor = require('../../models/doctor')
 const Notification = require('../../models/notification')
+const socket = require('../../socket')
 
 exports.viewAppointments = async (req, res) => {
   try {
@@ -27,7 +28,7 @@ exports.viewAppointments = async (req, res) => {
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: 'Error loading all your appointments',
-      error: error.message
+      error: error
     })
   }
 }
@@ -60,14 +61,17 @@ exports.viewAppointment = async (req, res) => {
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: 'Error loading patient appointment',
-      error: error.message
+      error: error
     })
   }
 }
 
 exports.createAppointment = async (req, res) => {
   try {
+    const io = socket.getIo()
+
     const patientId = req.user.id
+    const user = await User.findById(patientId)
     const { date, timeSlot, reason, doctor, notes } = req.body
 
     const doc = await Doctor.findOne({ name: doctor })
@@ -77,8 +81,6 @@ exports.createAppointment = async (req, res) => {
       })
     }
     const doctorId = doc._id
-
-    const user = await User.findOne({ _id: patientId })
 
     if (!user) {
       return res.status(StatusCodes.BAD_REQUEST).json({
@@ -95,9 +97,11 @@ exports.createAppointment = async (req, res) => {
       notes
     })
 
+    const appointment = await createdAppointment.save()
+
     // Push appointment to both patient and doctor.
-    user.appointments.push(createdAppointment)
-    doc.appointments.push(createdAppointment)
+    user.appointments.push(appointment._id)
+    doc.appointments.push(appointment._id)
 
     // create notification and push notification.
     // Doctor notification.
@@ -122,14 +126,23 @@ exports.createAppointment = async (req, res) => {
 
     // Push notifications ref to patient, doctor and appointment.
     user.notifications.push(savedPatientNotification._id)
+    user.markModified('notifications')
+    await user.save()
+
     doc.notifications.push(savedDoctorNotification._id)
-    createdAppointment.notifications.push(savedPatientNotification._id)
-    createdAppointment.notifications.push(savedDoctorNotification._id)
+    doc.markModified('notifications')
+    await doc.save()
+
+    appointment.notifications.push(
+      savedPatientNotification._id,
+      savedDoctorNotification._id
+    )
 
     // save created appointment to db.
-    await user.save()
-    await doc.save()
-    const appointment = await createdAppointment.save()
+
+    // Emit doctor & patient notifications.
+    io.emit('new-notification', savedDoctorNotification)
+    io.emit('new-notification', savedPatientNotification)
 
     res.status(StatusCodes.CREATED).json({
       message: 'appointment create success',
@@ -140,7 +153,7 @@ exports.createAppointment = async (req, res) => {
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: 'Error creating patient appointment',
-      error: error.message
+      error: error
     })
   }
 }
@@ -199,6 +212,11 @@ exports.updateAppointment = async (req, res) => {
     if (reason) appointment.reason = reason
     if (notes) appointment.notes = notes
 
+    appointment.notifications.push(
+      savedPatientNotification._id,
+      savedDoctorNotification._id
+    )
+
     const updatedAppointment = await appointment.save()
 
     // Create and push notification for doctor and patient.
@@ -231,8 +249,10 @@ exports.updateAppointment = async (req, res) => {
       $addToSet: { notifications: savedDoctorNotification._id }
     })
 
-    appointment.notifications.push(savedPatientNotification._id)
-    appointment.notifications.push(savedDoctorNotification._id)
+    // Emit doctor & patient notifications.
+    io.emit('new-notification', savedDoctorNotification)
+    io.emit('new-notification', savedPatientNotification)
+
     await appointment.save()
 
     res.status(StatusCodes.CREATED).json({
@@ -244,7 +264,7 @@ exports.updateAppointment = async (req, res) => {
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: 'Error updating patient appointment',
-      error: error.message
+      error: error
     })
   }
 }
@@ -266,7 +286,7 @@ exports.viewDoctors = async (req, res) => {
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: 'Error finding doctors',
-      error: error.message
+      error: error
     })
   }
 }
@@ -290,7 +310,7 @@ exports.viewDoctor = async (req, res) => {
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: 'error viewing doctor profile',
-      error: error.message
+      error: error
     })
   }
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Dialog, DialogPanel, PopoverGroup } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { AppState } from '@/store/context'
@@ -60,60 +60,94 @@ export const Header = () => {
   const { user, loading } = AppState()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+  const isDoctor = user?.role === 'doctor'
+  const isPatient = user?.role === 'patient'
+
   const {
     data: doctorNotifications,
     isLoading: doctorLoading,
     refetch: refetchDoctorNotifications
-  } = useDoctorNotifications()
+  } = useDoctorNotifications(isDoctor)
 
   const {
     data: patientNotifications,
     isLoading: patientLoading,
     refetch: refetchPatientNotifications
-  } = usePatientNotifications()
+  } = usePatientNotifications(isPatient)
 
-  const notifications =
-    doctorNotifications?.notifications ??
-    patientNotifications?.notifications ??
-    []
+  useEffect(() => {
+    isDoctor && refetchDoctorNotifications?.()
+    isPatient && refetchPatientNotifications?.()
+  }, [isDoctor, isPatient])
+
+  const notifications = isDoctor
+    ? doctorNotifications?.notifications
+    : isPatient
+    ? patientNotifications?.notifications
+    : []
 
   const notificationCount =
     notifications?.filter(notification => notification.status === 'unread')
       .length || 0
 
-  const { mutateAsync: updateNotification } = useUpdateDoctorNotification()
-  const { mutateAsync: deleteNotification } = useDeleteDoctorNotification()
+  const { mutateAsync: updateNotification } =
+    useUpdateDoctorNotification(isDoctor)
+  const { mutateAsync: deleteNotification } =
+    useDeleteDoctorNotification(isDoctor)
+
+  const { mutateAsync: updatePatientNotification } =
+    useUpdatePatientNotification(isPatient)
+  const { mutateAsync: deletePatientNotification } =
+    useDeletePatientNotification(isPatient)
 
   const markAsReadHandler = async id => {
-    try {
-      await updateNotification({
-        id,
-        status: 'read'
-      })
-      console.log(`notification status updated to [read] with id ${id}`)
-      refetchDoctorNotifications()
-    } catch (error) {
-      console.error("error updating notification status to ['read'] :", error)
-      throw new Error(error)
+    if (isDoctor) {
+      try {
+        await updateNotification({
+          id,
+          status: 'read'
+        })
+        console.log(`notification status updated to [read] with id ${id}`)
+        refetchDoctorNotifications()
+      } catch (error) {
+        console.error("error updating notification status to ['read'] :", error)
+        throw new Error(error)
+      }
+    } else if (isPatient) {
+      try {
+        await updatePatientNotification({ id, payload: 'read' })
+        console.log(
+          `notification status updated to [read] with id ${id} for patient`
+        )
+        refetchPatientNotifications()
+      } catch (error) {
+        console.error('error reading patient notifications: ', error)
+        throw new Error(error)
+      }
     }
   }
 
   const deleteNotificationHandler = async id => {
-    console.log('Performing delete action...')
-    await deleteNotification({ id })
-    console.log('Delete doctor notification success')
-    refetchDoctorNotifications()
+    if (isDoctor) {
+      console.log('Performing delete action...')
+      await deleteNotification({ id })
+      console.log('Delete patient notification success')
+      refetchPatientNotifications()
+    } else if (isPatient) {
+      console.log('Performing delete action...')
+      await deletePatientNotification({ id })
+      console.log('Delete patient notification success')
+      refetchDoctorNotifications()
+    }
   }
 
   const links = userLinks(user)
 
   if (loading) return <div>Loading.....</div>
-  console.log(
-    'patient notifications: ',
-    notifications,
-    ' count: ',
-    notificationCount
-  )
+  if (isDoctor) {
+    console.log('doctor notifications: ', doctorNotifications)
+  }
+  console.log('notifications: ', notifications, ' count: ', notificationCount)
 
   return (
     <header className='bg-white'>
@@ -232,6 +266,8 @@ export const Header = () => {
                     <Notification
                       notifications={notifications}
                       notificationCounter={notificationCount}
+                      notificationHandler={markAsReadHandler}
+                      deleteHandler={deleteNotificationHandler}
                     />
 
                     <button type='button'>Logout</button>

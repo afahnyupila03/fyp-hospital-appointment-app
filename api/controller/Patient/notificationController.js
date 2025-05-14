@@ -2,6 +2,7 @@ const { StatusCodes } = require('http-status-codes')
 
 const Notification = require('../../models/notification')
 const User = require('../../models/user')
+const Appointment = require('../../models/appointment')
 
 exports.requestNotificationPermission = async () => {
   try {
@@ -27,7 +28,7 @@ exports.requestNotificationPermission = async () => {
 exports.notifications = async (req, res) => {
   try {
     const patientId = req.user.id
-    const { page = 1, limit = 10 } = req.query
+    const { page, limit } = req.query
 
     if (!patientId) {
       return res
@@ -36,17 +37,23 @@ exports.notifications = async (req, res) => {
     }
 
     const notifications = await Notification.find({
-      $or: [{ sender: patientId }, { receiver: patientId }]
+      receiver: patientId
     })
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(parseInt(limit))
-      .populate('receiver')
-      .populate('sender')
-      .populate('appointment')
+      .populate('receiver', '-password')
+      .populate('sender', '-password')
+      .populate({
+        path: 'appointment',
+        populate: {
+          path: 'doctorId',
+          populate: 'name email'
+        }
+      })
 
     const count = await Notification.countDocuments({
-      $or: [{ sender: patientId }, { receiver: patientId }]
+      receiver: patientId
     })
     const totalPages = Math.ceil(count / limit)
     const currentPage = parseInt(page)
@@ -80,11 +87,17 @@ exports.notification = async (req, res) => {
 
     const notification = await Notification.findOne({
       _id: id,
-      $or: [{ sender: patientId }, { receiver: patientId }]
+      receiver: patientId
     })
-      .populate('receiver')
-      .populate('sender')
-      .populate('appointment')
+      .populate('receiver', '-password')
+      .populate('sender', '-password')
+      .populate({
+        path: 'appointment',
+        populate: {
+          path: 'doctorId',
+          populate: 'name, email'
+        }
+      })
 
     if (!notification) {
       return res.status(StatusCodes.BAD_REQUEST).json({
@@ -133,8 +146,8 @@ exports.updateNotification = async (req, res) => {
       _id: id,
       $or: [{ sender: patientId }, { receiver: patientId }]
     })
-      .populate('receiver')
-      .populate('sender')
+      .populate('receiver', '-password')
+      .populate('sender', '-password')
       .populate('appointment')
 
     if (!notification) {
@@ -154,6 +167,67 @@ exports.updateNotification = async (req, res) => {
     console.error('update notification controller error: ', error)
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: 'server error for updating notification',
+      error: error.message
+    })
+  }
+}
+
+exports.deleteNotification = async (req, res) => {
+  try {
+    const patientId = req.user.id
+    const { id } = req.params
+
+    if (!patientId) {
+      return res
+        .status(StatusCodes.UNAUTHORIZED)
+        .json({ message: 'Please reauthenticate account to perform action.' })
+    }
+
+    const ids = id.split(',') // Check if id is a comma-separated list.
+
+    //  Fetch all notifications to be deleted.
+    const notifications = await Notification.find({
+      _id: { $in: ids },
+      receiver: patientId
+    })
+
+    if (notifications.length === 0) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        message: 'No notifications found for deletion.'
+      })
+    }
+
+    // Clean-up related models before deleting.
+    for (const notification of notifications) {
+      // Remove from Appointment.notifications.
+      if (notification.appointment) {
+        await Appointment.updateOne(
+          { _id: notification.appointment },
+          {
+            $pull: { notifications: notification._id }
+          }
+        )
+      }
+
+      // Remove from User.notifications (either receiver or sender).
+      await User.updateMany(
+        { _id: patientId },
+        { $pull: { notifications: notification._id } }
+      )
+    }
+
+    // Delete notifications.
+    await Notification.deleteMany({
+      _id: { $in: notifications.map(n => n._id) }
+    })
+
+    res.status(StatusCodes.OK).json({
+      message: 'Notification(s) delete success'
+    })
+  } catch (error) {
+    console.log('error deleting patient notification(s)')
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: 'Error deleting patient notification(s)',
       error: error.message
     })
   }

@@ -14,38 +14,41 @@ export const useDoctorNotificationPermission = () => {
   })
 }
 
-export const useDoctorNotifications = (page, limit) => {
+export const useDoctorNotifications = (page, limit, isDoctor) => {
   return useQuery({
-    queryKey: ['notifications', page],
-    queryFn: () => viewDoctorNotifications(page, limit),
+    queryKey: ['notifications', isDoctor],
+    queryFn: () => viewDoctorNotifications(page, limit, isDoctor),
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchInterval: false,
-    staleTime: 10 * 60 * 1000
+    staleTime: 10 * 60 * 1000,
+    enabled: !!isDoctor
   })
 }
 
-export const useDoctorNotification = id => {
+export const useDoctorNotification = (id, isDoctor) => {
   return useQuery({
-    queryKey: ['notification', id],
+    queryKey: ['notification', id, isDoctor],
     queryFn: () => viewDoctorNotification(id),
-    enabled: !!id
+    enabled: !!id && !!isDoctor
   })
 }
 
-export const useUpdateDoctorNotification = () => {
+export const useUpdateDoctorNotification = isDoctor => {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: ({ id, status }) =>
       updateDoctorNotificationStatus(id, { status }),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({
-        queryKey: ['notifications']
-      })
-      queryClient.invalidateQueries({
-        queryKey: ['notification', id]
-      })
+      if (isDoctor) {
+        queryClient.invalidateQueries({
+          queryKey: ['notifications', isDoctor]
+        })
+        queryClient.invalidateQueries({
+          queryKey: ['notification', id, isDoctor]
+        })
+      }
     }
   })
 }
@@ -55,9 +58,12 @@ export const useDeleteDoctorNotification = () => {
 
   return useMutation({
     mutationFn: ({ id }) => deleteDoctorNotification(id),
-    onSuccess: () =>
-      queryClient.invalidateQueries({
-        queryKey: ['notifications']
-      })
+    onSuccess: () => {
+      if (isDoctor) {
+        queryClient.invalidateQueries({
+          queryKey: ['notifications', isDoctor]
+        })
+      }
+    }
   })
 }
