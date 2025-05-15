@@ -8,9 +8,14 @@ import {
   usePatientAppointments,
   usePatientDoctors
 } from '@/hooks/patient/usePatient'
+import PieChart, { DoughnutChart, BarChart } from '@/components/Chart'
 
 import Table from '@/components/Table'
 import Dropdown from '@/components/Dropdown'
+
+import { CategoryScale } from 'chart.js'
+import Chart from 'chart.js/auto'
+Chart.register(CategoryScale)
 
 const appointmentActions = appointment => {
   const id = appointment._id
@@ -64,9 +69,30 @@ const doctorsActions = doctors => {
   ]
 }
 
+const getStatusCounts = appointments => {
+  const counts = {
+    pending: 0,
+    confirmed: 0,
+    completed: 0,
+    canceled: 0
+  }
+
+  appointments?.appointments.forEach(appt => {
+    const status = appt.status?.toLowerCase()
+    if (counts[status] !== undefined) {
+      counts[status]++
+    }
+  })
+
+  return counts
+}
+
 export default function PatientDashboardPage () {
   const { user, loading } = AppState()
   const router = useRouter()
+
+  const [patientAppointments, setPatientAppointments] = useState(null)
+  const [appointmentMonthlyData, setAppointmentMonthlyData] = useState(null)
 
   const [appointmentPage, setAppointmentPage] = useState(1)
   const appointmentLimit = 10
@@ -134,6 +160,67 @@ export default function PatientDashboardPage () {
   const doctorsTotalPages = doctors?.totalPages
   const doctorsCurrentPage = doctors?.currentPage
 
+  useEffect(() => {
+    if (appointments?.appointments) {
+      const statusCounts = getStatusCounts(appointments)
+
+      const doughnutData = {
+        labels: ['Pending', 'Confirmed', 'Completed', 'Canceled'],
+        datasets: [
+          {
+            label: 'Appointments',
+            data: [
+              statusCounts.pending,
+              statusCounts.confirmed,
+              statusCounts.completed,
+              statusCounts.canceled
+            ],
+            backgroundColor: ['#facc15', '#22c55e', '#3b82f6', '#ef4444'],
+            borderRadius: 4
+          }
+        ]
+      }
+      setPatientAppointments(doughnutData)
+
+      // Monthly chart appointment representation.
+      const monthlyCounts = {}
+
+      appointments?.appointments.forEach(appt => {
+        const date = new Date(appt.createdAt) // or appt.updatedAt
+        const monthLabel = date.toLocaleString('default', { month: 'long' })
+
+        monthlyCounts[monthLabel] = (monthlyCounts[monthLabel] || 0) + 1
+      })
+
+      const pieData = {
+        labels: Object.keys(monthlyCounts),
+        datasets: [
+          {
+            label: 'Appointments per Month',
+            data: Object.values(monthlyCounts),
+            backgroundColor: [
+              '#f87171',
+              '#fb923c',
+              '#facc15',
+              '#4ade80',
+              '#60a5fa',
+              '#a78bfa',
+              '#f472b6',
+              '#34d399',
+              '#fbbf24',
+              '#818cf8',
+              '#ec4899',
+              '#22d3ee'
+            ],
+            borderRadius: 4
+          }
+        ]
+      }
+
+      setAppointmentMonthlyData(pieData)
+    }
+  }, [appointments])
+
   if (loadingDoctors || loadingAppointments || !user || loading)
     return <p>Loading...</p>
   if (isDoctorsError) {
@@ -189,6 +276,9 @@ export default function PatientDashboardPage () {
     ) : (
       doctors?.doctors?.map((doctor, index) => (
         <tr
+          style={{
+            backgroundColor: index % 2 === 0 ? '#ceceff' : '#e6e6ff'
+          }}
           key={doctor._id}
           className='cursor-pointer'
           onClick={() =>
@@ -219,6 +309,31 @@ export default function PatientDashboardPage () {
 
   return (
     <div>
+      {/* Charts section. */}
+      {/* Appointment breakdown by status */}
+      {appointments?.count === 0 ? (
+        <p className='mt-10 text-center text-gray-500'>
+          No appointment data to display in charts.
+        </p>
+      ) : (
+        <DoughnutChart
+          chartData={patientAppointments}
+          text='Appointment Status Breakdown'
+        />
+      )}
+
+      {/* Appointment breakdown by booked periods (month). */}
+      {appointments?.count === 0 ? (
+        <p className='mt-10 text-center text-gray-500'>
+          No appointment data to display in charts.
+        </p>
+      ) : (
+        <PieChart
+          chartData={appointmentMonthlyData}
+          text='Appointments by Month'
+        />
+      )}
+
       {/* Appointment Table */}
       <Table
         tableHeaders={appointmentTableHeaders}
