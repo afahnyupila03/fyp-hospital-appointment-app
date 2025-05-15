@@ -3,6 +3,8 @@ const bcrypt = require("bcrypt");
 const { StatusCodes } = require("http-status-codes");
 const jwt = require("jsonwebtoken");
 
+const Logout = require('../../models/logout')
+
 const generateToken = (user) => {
   return jwt.sign(
     {
@@ -88,6 +90,31 @@ exports.loginAdmin = async (req, res) => {
   }
 };
 
+exports.getAdmin = async (req, res) => {
+  try {
+    const adminId = req.user.id
+
+    const admin = await Admin.findById(adminId).select("-password") // Exclude password field
+
+    if (!admin) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        message: 'Admin not found'
+      })
+    }
+    
+    res.status(StatusCodes.OK).json({
+      message: 'admin data retrieved successfully.',
+      admin
+    })
+  }
+  catch (error) {
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: 'Error fetching admin data',
+      error: error.message
+    })
+  }
+}
+
 exports.logoutAdmin = async (req, res) => {
   try {
     const authHeader = req.get("Authorization");
@@ -104,7 +131,8 @@ exports.logoutAdmin = async (req, res) => {
       });
     }
 
-    const blacklisted = await Admin.findOne({ token });
+    const blacklisted = await Admin.findOne({ token })
+    .populate('_id');
     if (blacklisted) {
       return res.status(StatusCodes.UNAUTHORIZED).json({
         message: "user account signed out, please login again",
