@@ -34,5 +34,5 @@ module.exports = (router) => {
     updateAppointment
   );
   router.get("/doctors", auth, restrictTo("patient"), viewDoctors);
-  router.get("/doctors", auth, restrictTo("patient"), viewDoctor);
+  router.get("/doctor/:id", auth, restrictTo("patient"), viewDoctor);
 };

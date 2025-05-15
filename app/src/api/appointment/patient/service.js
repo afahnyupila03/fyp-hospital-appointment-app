@@ -32,12 +32,19 @@ export const viewAppointmentsService = async (page, limit) => {
       headers: getHeaders()
     }
   )
-  if (!res.ok) throw new Error('Error fetching doctors appointments')
 
   const data = await res.json()
-  const appointments = data.appointments
+  if (!res.ok)
+    throw new Error(
+      data.message || data.error || 'Error fetching doctors appointments'
+    )
 
-  return appointments
+  const appointments = data.appointments
+  const count = data.count
+  const currentPage = data.currentPage
+  const totalPages = data.totalPages
+
+  return { appointments, count, currentPage, totalPages }
 }
 
 export const viewAppointmentService = async id => {
@@ -71,22 +78,33 @@ export const updateAppointmentService = async (id, formData) => {
   return updatedAppointment
 }
 
-export const viewDoctorsService = async () => {
+export const viewDoctorsService = async (page, limit) => {
   try {
-    const res = await fetch('http://localhost:4000/patient/doctors', {
-      headers: getHeaders()
-    })
+    const res = await fetch(
+      `http://localhost:4000/patient/doctors?page=${page}&limit=${limit}`,
+      {
+        headers: getHeaders()
+      }
+    )
     console.log('doctors res: ', res)
 
-    if (!res.ok) {
-      throw new Error('Error fetching doctors from servers')
-    }
     const data = await res.json()
 
+    if (!res.ok) {
+      throw new Error(
+        data.message ||
+          data.error ||
+          'Error fetching doctors for patient from servers'
+      )
+    }
+
     const doctors = data.doctors
+    const count = data.count
+    const currentPage = data.currentPage
+    const totalPages = data.totalPages
     console.log('doctors data: ', doctors)
 
-    return doctors
+    return { doctors, count, currentPage, totalPages }
   } catch (error) {
     console.error('Admin-Doctors: ', error.message)
     throw error

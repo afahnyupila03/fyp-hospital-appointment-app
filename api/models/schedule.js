@@ -1,8 +1,6 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const { TIME_SLOTS } = require("../constants");
-
 const scheduleSchema = new Schema(
   {
     doctorId: {

@@ -1,160 +1,234 @@
-const { StatusCodes } = require("http-status-codes");
+const { StatusCodes } = require('http-status-codes')
 
-const Notification = require("../../models/notification");
-const User = require("../../models/user");
+const Notification = require('../../models/notification')
+const User = require('../../models/user')
+const Appointment = require('../../models/appointment')
 
-exports.requestNotificationPermission = async () => {
+exports.requestNotificationPermission = async (req, res) => {
   try {
-    const patientId = req.user.id;
-    const { granted } = req.body;
+    const patientId = req.user.id
+    const { granted } = req.body
 
     await User.findByIdAndUpdate(patientId, {
-      notificationPermission: granted,
-    });
+      notificationPermission: granted
+    })
 
     res.status(StatusCodes.OK).json({
-      message: "Notification permission grant success",
-    });
+      message: 'Notification permission grant success'
+    })
   } catch (error) {
-    console.error("error granting notification permission: ", error);
+    console.error('error granting notification permission: ', error)
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      message: "Failed to change user notification default state",
-      error: error.message,
-    });
+      message: 'Failed to change user notification default state',
+      error: error.message
+    })
   }
-};
+}
 
 exports.notifications = async (req, res) => {
   try {
-    const patientId = req.user.id;
-    const { page = 1, limit = 10 } = req.query;
+    const patientId = req.user.id
+    const { page, limit } = req.query
 
     if (!patientId) {
       return res
         .status(StatusCodes.UNAUTHORIZED)
-        .json({ message: "Unauthorized access. Please log in." });
+        .json({ message: 'Unauthorized access. Please log in.' })
     }
 
     const notifications = await Notification.find({
-      $or: [{ sender: patientId }, { receiver: patientId }],
+      receiver: patientId
     })
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(parseInt(limit))
-      .populate("receiver")
-      .populate("sender")
-      .populate("appointment");
+      .populate('receiver', '-password')
+      .populate('sender', '-password')
+      .populate({
+        path: 'appointment',
+        populate: {
+          path: 'doctorId',
+          populate: 'name email'
+        }
+      })
 
     const count = await Notification.countDocuments({
-      $or: [{ sender: patientId }, { receiver: patientId }],
-    });
-    const totalPage = Math.ceil(count / limit);
-    const currentPage = parseInt(page);
+      receiver: patientId
+    })
+    const totalPages = Math.ceil(count / limit)
+    const currentPage = parseInt(page)
 
     res.status(StatusCodes.OK).json({
-      message: "patient notifications",
+      message: 'patient notifications',
       notifications,
       count,
-      totalPage,
-      currentPage,
-    });
+      totalPages,
+      currentPage
+    })
   } catch (error) {
-    console.error("server error querying patient notifications: ", error);
+    console.error('server error querying patient notifications: ', error)
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      message: "error quering patient notifications",
-      error: error.message,
-    });
+      message: 'error quering patient notifications',
+      error: error.message
+    })
   }
-};
+}
 
 exports.notification = async (req, res) => {
   try {
-    const patientId = req.user.id;
-    const { id } = req.params;
+    const patientId = req.user.id
+    const { id } = req.params
 
     if (!patientId) {
       return res
         .status(StatusCodes.UNAUTHORIZED)
-        .json({ message: "Unauthorized access. Please log in." });
+        .json({ message: 'Unauthorized access. Please log in.' })
     }
 
-    const notifications = await Notification.findOne({
+    const notification = await Notification.findOne({
       _id: id,
-      $or: [{ sender: patientId }, { receiver: patientId }],
+      receiver: patientId
     })
-      .populate("receiver")
-      .populate("sender")
-      .populate("appointment");
+      .populate('receiver', '-password')
+      .populate('sender', '-password')
+      .populate({
+        path: 'appointment',
+        populate: {
+          path: 'doctorId',
+          populate: 'name, email'
+        }
+      })
 
     if (!notification) {
       return res.status(StatusCodes.BAD_REQUEST).json({
-        message: "Notification does not exist",
-      });
+        message: 'Notification does not exist'
+      })
     }
 
     // Auto change notification status from 'read' to 'unread'.
-    if (notification.status === "unread") {
-      notification.status = "read";
-      await notification.save();
+    if (notification.status === 'unread') {
+      notification.status = 'read'
+      await notification.save()
     }
 
     res.status(StatusCodes.OK).json({
-      message: "patient notification",
-      notifications,
-    });
+      message: 'patient notification',
+      notification
+    })
   } catch (error) {
-    console.error("server error querying patient notification: ", error);
+    console.error('server error querying patient notification: ', error)
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      message: "error quering patient notification",
-      error: error.message,
-    });
+      message: 'error quering patient notification',
+      error: error.message
+    })
   }
-};
+}
 
 exports.updateNotification = async (req, res) => {
   try {
-    const patientId = req.user.id;
-    const { id } = req.params;
-    const { status } = req.body;
+    const patientId = req.user.id
+    const { id } = req.params
+    const { status } = req.body
 
     if (!patientId) {
       return res
         .status(StatusCodes.UNAUTHORIZED)
-        .json({ message: "Unauthorized access. Please log in." });
+        .json({ message: 'Unauthorized access. Please log in.' })
     }
 
     if (!id) {
       return res
         .status(StatusCodes.BAD_REQUEST)
-        .json({ message: "notification does not exist" });
+        .json({ message: 'notification does not exist' })
     }
 
     const notification = await Notification.findOne({
       _id: id,
-      $or: [{ sender: patientId }, { receiver: patientId }],
+      $or: [{ sender: patientId }, { receiver: patientId }]
     })
-      .populate("receiver")
-      .populate("sender")
-      .populate("appointment");
+      .populate('receiver', '-password')
+      .populate('sender', '-password')
+      .populate('appointment')
 
     if (!notification) {
       return res.status(StatusCodes.BAD_REQUEST).json({
-        message: "notification does not exist",
-      });
+        message: 'notification does not exist'
+      })
     }
 
-    notification.status = status;
-    await notification.save();
+    notification.status = status
+    await notification.save()
 
     res.status(StatusCodes.OK).json({
-      message: "notification update success",
-      notification,
-    });
+      message: 'notification update success',
+      notification
+    })
   } catch (error) {
-    console.error("update notification controller error: ", error);
+    console.error('update notification controller error: ', error)
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      message: "server error for updating notification",
-      error: error.message,
-    });
+      message: 'server error for updating notification',
+      error: error.message
+    })
   }
-};
+}
+
+exports.deleteNotification = async (req, res) => {
+  try {
+    const patientId = req.user.id
+    const { id } = req.params
+
+    if (!patientId) {
+      return res
+        .status(StatusCodes.UNAUTHORIZED)
+        .json({ message: 'Please reauthenticate account to perform action.' })
+    }
+
+    const ids = id.split(',') // Check if id is a comma-separated list.
+
+    //  Fetch all notifications to be deleted.
+    const notifications = await Notification.find({
+      _id: { $in: ids },
+      receiver: patientId
+    })
+
+    if (notifications.length === 0) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        message: 'No notifications found for deletion.'
+      })
+    }
+
+    // Clean-up related models before deleting.
+    for (const notification of notifications) {
+      // Remove from Appointment.notifications.
+      if (notification.appointment) {
+        await Appointment.updateOne(
+          { _id: notification.appointment },
+          {
+            $pull: { notifications: notification._id }
+          }
+        )
+      }
+
+      // Remove from User.notifications (either receiver or sender).
+      await User.updateMany(
+        { _id: patientId },
+        { $pull: { notifications: notification._id } }
+      )
+    }
+
+    // Delete notifications.
+    await Notification.deleteMany({
+      _id: { $in: notifications.map(n => n._id) }
+    })
+
+    res.status(StatusCodes.OK).json({
+      message: 'Notification(s) delete success'
+    })
+  } catch (error) {
+    console.log('error deleting patient notification(s)')
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: 'Error deleting patient notification(s)',
+      error: error.message
+    })
+  }
+}
