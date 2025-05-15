@@ -1,7 +1,7 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { BellIcon } from '@heroicons/react/20/solid'
 import Link from 'next/link'
-import { useState } from 'react'
+import { AppState } from '@/store/context'
 
 const styles = {
   notificationWrapper: {
@@ -69,8 +69,9 @@ export default function Notification ({
   notificationHandler,
   deleteHandler
 }) {
+  const { user, loading } = AppState()
 
-  const role = localStorage.getItem('role')
+  const role = user?.role || '#'
 
   return (
     <Menu as='div' className='relative inline-block text-left'>
@@ -153,7 +154,7 @@ export default function Notification ({
         ) : (
           <>
             <div className='py-1'>
-              <p className='text-center'>No notifications</p>
+              <p className='text-center'>No unread notifications</p>
             </div>
 
             <div className='py-1 pr-4 flex justify-end'>

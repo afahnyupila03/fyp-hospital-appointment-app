@@ -4,7 +4,7 @@ const Notification = require('../../models/notification')
 const User = require('../../models/user')
 const Appointment = require('../../models/appointment')
 
-exports.requestNotificationPermission = async () => {
+exports.requestNotificationPermission = async (req, res) => {
   try {
     const patientId = req.user.id
     const { granted } = req.body

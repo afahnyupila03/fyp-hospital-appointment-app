@@ -22,7 +22,9 @@ exports.viewAppointments = async (req, res) => {
       .populate('notifications')
       .sort({ createdAt: -1 })
 
-    const count = await Appointment.countDocuments({ doctorId })
+    const count = await Appointment.find({ doctorId }).countDocuments({
+      doctorId
+    })
     const totalPages = Math.ceil(count / limit)
     const currentPage = parseInt(page)
 

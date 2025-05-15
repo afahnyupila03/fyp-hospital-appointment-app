@@ -138,7 +138,7 @@ export default function DoctorDashboardPage () {
     } else {
       // Browser already has a verdict (granted/denied) but backend hasn't recorded it:
       const granted = Notification.permission === 'granted'
-      requestPermission({ granted }).catch(err =>
+      notificationRequest({ granted }).catch(err =>
         console.error('Failed to sync existing permission:', err)
       )
     }

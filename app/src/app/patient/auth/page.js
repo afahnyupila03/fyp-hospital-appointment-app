@@ -91,7 +91,7 @@ export default function PatientAuthPage () {
     }
   }
 
-  if (loading) return <p>Loading...!</p>
+  // if (loading) return <p>Loading...!</p>
 
   const signupValues = {
     name: '',

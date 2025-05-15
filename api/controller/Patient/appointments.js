@@ -8,22 +8,39 @@ const socket = require('../../socket')
 
 exports.viewAppointments = async (req, res) => {
   try {
-    const user = req.user
+    const patientId = req.user.id
+    const { page, limit } = req.query
 
-    const appointments = await Appointment.find({ patientId: user.id })
+    if (!patientId) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        message:
+          'Unauthorized access, please authenticate account to perform action.'
+      })
+    }
+
+    const appointments = await Appointment.find({ patientId })
       .populate('patientId', 'email name reason notes')
       .populate('doctorId', 'email name specialization department')
       .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
+      .skip((page - 1) * limit)
 
-    if (!appointments) {
+    const count = await Appointment.find({ patientId }).countDocuments()
+    const totalPages = Math.ceil(count / limit)
+    const currentPage = parseInt(page)
+
+    if (!appointments || appointments.length === 0) {
       return res.status(StatusCodes.BAD_REQUEST).json({
-        message: 'Error find patient appointments'
+        message: 'No booked appointments'
       })
     }
 
     res.status(StatusCodes.OK).json({
       message: 'viewing all patient appointments',
-      appointments
+      appointments,
+      count,
+      totalPages,
+      currentPage
     })
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -271,17 +288,37 @@ exports.updateAppointment = async (req, res) => {
 
 exports.viewDoctors = async (req, res) => {
   try {
-    const doctors = await Doctor.find().populate()
+    const patientId = req.user.id
+    const { page, limit } = req.query
 
-    if (!doctors || doctors.length === 0) {
-      return res.status(StatusCodes.NOT_FOUND).json({
-        message: 'no doctors found in db.'
+    if (!patientId) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        message: 'Unauthorized action. Authenticate account to perform action.'
       })
     }
 
+    const doctors = await Doctor.find()
+      .populate('schedules')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
+
+    if (!doctors || doctors.length === 0) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        message: 'No doctors registered at the moment.'
+      })
+    }
+
+    const count = await Doctor.find().estimatedDocumentCount()
+    const totalPages = Math.ceil(count / limit)
+    const currentPage = parseInt(page)
+
     res.status(StatusCodes.OK).json({
       message: 'patient viewing all doctors',
-      doctors
+      doctors,
+      count,
+      totalPages,
+      currentPage
     })
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({

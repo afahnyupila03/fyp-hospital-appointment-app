@@ -9,7 +9,7 @@ const {
 
 module.exports = router => {
   router.post(
-    'notification-permission',
+    '/notification-permission',
     auth,
     restrictTo('patient'),
     requestNotificationPermission
