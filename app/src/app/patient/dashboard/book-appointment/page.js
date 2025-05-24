@@ -138,11 +138,33 @@ export default function BookAppointmentPage () {
                 type='date'
                 label='Day'
                 placeholder='Eg Tuesday 12 May'
-                onChange={handleChange}
+                onChange={e => {
+                  const inputDate = new Date(e.target.value)
+                  const today = new Date()
+
+                  // Zero out the time for accurate date comparison
+                  inputDate.setHours(0, 0, 0, 0)
+                  today.setHours(0, 0, 0, 0)
+
+                  // Get selected day of the week in title case (e.g. "Monday")
+                  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+                  const inputDay = days[inputDate.getDay()]
+
+                  if (inputDate < today) {
+                    setFieldValue('day', '')
+                    alert("Can't book appointment for a date in the past")
+                  } else if (!doctorSchedule.some(s => s.day === inputDay)) {
+                    setFieldValue('day', '')
+                    alert(`Doctor is not available on ${inputDay}`)
+                  } else {
+                    setFieldValue('day', e.target.value)
+                  }
+                }}
                 onBlur={handleBlur}
                 errors={errors}
                 touched={touched}
                 value={values.day}
+                min={new Date().toISOString().split('T')[0]} // disables past dates
               />
 
               <CustomInput
@@ -209,7 +231,7 @@ export default function BookAppointmentPage () {
               }
               disabled={isSubmitting || !isValid}
             >
-              {isSubmitting? 'Booking' : 'Book'}
+              {isSubmitting ? 'Booking' : 'Book'}
             </button>
           </Form>
         )}
