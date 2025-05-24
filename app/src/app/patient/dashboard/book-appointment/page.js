@@ -147,7 +147,15 @@ export default function BookAppointmentPage () {
                   today.setHours(0, 0, 0, 0)
 
                   // Get selected day of the week in title case (e.g. "Monday")
-                  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+                  const days = [
+                    'Sunday',
+                    'Monday',
+                    'Tuesday',
+                    'Wednesday',
+                    'Thursday',
+                    'Friday',
+                    'Saturday'
+                  ]
                   const inputDay = days[inputDate.getDay()]
 
                   if (inputDate < today) {
