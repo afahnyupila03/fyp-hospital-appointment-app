@@ -21,6 +21,7 @@ export default function PatientAuthPage () {
       setExistingUser(prevState => !prevState)
     }, 500)
   }
+
   const signupPatientHandler = async () => {
     try {
       setLoading(true)
@@ -109,6 +110,7 @@ export default function PatientAuthPage () {
       onSubmit={existingUser ? signupPatientHandler : loginPatientHandler}
       validationSchema={existingUser ? signupSchema : signinSchema}
     >
+
       {({
         values,
         handleBlur,
@@ -166,19 +168,19 @@ export default function PatientAuthPage () {
             <p className='mb-0'>
               {existingUser ? 'Account exists?' : 'New user?'}
             </p>
-            <button
-              onClick={existingUserHandler}
-              className='cursor-pointer'
-            >
+            <button onClick={existingUserHandler} className='cursor-pointer'>
               {existingUser ? 'Login' : 'Signup'}
             </button>
           </div>
 
           <div>
-            <button type='submit'>{existingUser ? 'Signup' : 'Login'}</button>
+            <button className='cursor-pointer' type='submit'>
+              {existingUser ? 'Signup' : 'Login'}
+            </button>
           </div>
         </Form>
       )}
+      
     </Formik>
   )
 }

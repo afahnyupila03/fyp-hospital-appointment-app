@@ -12,17 +12,17 @@ const getHeaders = () => {
 }
 
 export const createAppointmentService = async formData => {
-  const res = await fetch('http://localhost:4000/patient/create-appoinment', {
+  const res = await fetch('http://localhost:4000/patient/create-appointment', {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify(formData)
   })
-  if (!res.ok) throw new Error('Error creating patient appointment')
 
-  const result = await res.json()
-  const createdAppointment = result.data
+  const data = await res.json()
 
-  return createdAppointment
+  if (!res.ok) throw new Error(data.error || data.message)
+
+  return data.appointment
 }
 
 export const viewAppointmentsService = async (page, limit) => {
@@ -118,25 +118,15 @@ export const viewDoctorService = async id => {
       headers: getHeaders()
     })
 
-    if (!res.ok) {
-      throw new Error('Error fetching doctor profile from server')
-    }
-
     const data = await res.json()
+
+    if (!res.ok) {
+      throw new Error(data.error)
+    }
+
     const doctor = data.doctor
-    console.log('get doctor service: ', doctor)
 
-    if (Array.isArray(doctor)) {
-      return {
-        id: doctor._id,
-        name: doctor.name
-      }
-    }
-
-    return {
-      id: doctor._id,
-      name: doctor.name
-    }
+    return doctor
   } catch (error) {
     console.error('doctor query error: ', error.message)
     throw error

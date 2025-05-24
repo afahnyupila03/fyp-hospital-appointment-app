@@ -87,6 +87,13 @@ const getStatusCounts = appointments => {
   return counts
 }
 
+const statusColors = {
+  pending: '#facc15', // yellow
+  confirmed: '#22c55e', // green
+  completed: '#3b82f6', // blue
+  canceled: '#ef4444' // red
+}
+
 export default function PatientDashboardPage () {
   const { user, loading } = AppState()
   const router = useRouter()
@@ -243,11 +250,16 @@ export default function PatientDashboardPage () {
     </>
   )
   const appointmentTableData =
-    appointments?.appointments.length === 0 ? (
+    appointments?.count === 0 ? (
       <tr>No Booked appointments</tr>
     ) : (
       appointments?.appointments?.map((appointment, index) => (
-        <tr key={appointment._id}>
+        <tr
+          style={{
+            backgroundColor: statusColors[appointment.status?.toLowerCase()]
+          }}
+          key={appointment._id}
+        >
           <td>{index + 1}</td>
           <td>{appointment.doctorId.name}</td>
           <td>{appointment.date}</td>
@@ -271,7 +283,7 @@ export default function PatientDashboardPage () {
     </>
   )
   const doctorsTableData =
-    doctors?.doctors.length === 0 ? (
+    doctors?.count === 0 ? (
       <tr>No registered doctors in system</tr>
     ) : (
       doctors?.doctors?.map((doctor, index) => (

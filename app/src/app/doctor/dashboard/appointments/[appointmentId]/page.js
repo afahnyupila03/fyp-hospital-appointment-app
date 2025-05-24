@@ -5,7 +5,6 @@ export default async function AppointmentPage({ params }) {
 
   return (
     <div>
-      <p>Appointment id : {appointmentId}</p>
       <AppointmentId id={appointmentId} />
     </div>
   );

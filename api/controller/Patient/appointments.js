@@ -91,13 +91,13 @@ exports.createAppointment = async (req, res) => {
     const user = await User.findById(patientId)
     const { date, timeSlot, reason, doctor, notes } = req.body
 
-    const doc = await Doctor.findOne({ name: doctor })
-    if (!doc) {
+    const doctorId = await Doctor.findById(doctor)
+    if (!doctorId) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         message: 'selected doctor does not exist'
       })
     }
-    const doctorId = doc._id
+    // const doctorId = doc._id
 
     if (!user) {
       return res.status(StatusCodes.BAD_REQUEST).json({
@@ -118,7 +118,7 @@ exports.createAppointment = async (req, res) => {
 
     // Push appointment to both patient and doctor.
     user.appointments.push(appointment._id)
-    doc.appointments.push(appointment._id)
+    doctorId.appointments.push(appointment._id)
 
     // create notification and push notification.
     // Doctor notification.
@@ -146,9 +146,9 @@ exports.createAppointment = async (req, res) => {
     user.markModified('notifications')
     await user.save()
 
-    doc.notifications.push(savedDoctorNotification._id)
-    doc.markModified('notifications')
-    await doc.save()
+    doctorId.notifications.push(savedDoctorNotification._id)
+    doctorId.markModified('notifications')
+    await doctorId.save()
 
     appointment.notifications.push(
       savedPatientNotification._id,
@@ -170,7 +170,7 @@ exports.createAppointment = async (req, res) => {
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: 'Error creating patient appointment',
-      error: error
+      error: error.message
     })
   }
 }
@@ -332,7 +332,7 @@ exports.viewDoctor = async (req, res) => {
   try {
     const { id } = req.params
 
-    const doctor = await Doctor.findOne({ _id: id })
+    const doctor = await Doctor.findOne({ _id: id }).populate('schedules')
 
     if (!doctor) {
       return res.status(StatusCodes.NOT_FOUND).json({
