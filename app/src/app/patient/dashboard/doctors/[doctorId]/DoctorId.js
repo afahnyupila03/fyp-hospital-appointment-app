@@ -4,6 +4,7 @@ import Table from '@/components/Table'
 import { usePatientDoctor } from '@/hooks/patient/usePatient'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function DoctorId ({ id }) {
   const { data, isLoading, isError, error } = usePatientDoctor(id)
@@ -102,7 +103,7 @@ export default function DoctorId ({ id }) {
   if (isLoading) return <p>Loading...</p>
   if (isError) return <p>{error}</p>
 
-  const { name, email, specialization, department, appointments } = data
+  const { name, email, specialization, department, appointments, _id } = data
   const appointmentCount = appointments?.length || 0
 
   const tableHeaders = (
@@ -132,12 +133,14 @@ export default function DoctorId ({ id }) {
           <p>Total booked appointments: {appointmentCount}</p>
         </div>
         <div className='mt-4'>
-          <button
-            className='bg-blue-500 hover:bg-blue-600 text-white font-semibold cursor-pointer py-2 px-4 rounded'
-            onClick={() => router.push(`${id}/book-appointment`)}
-          >
-            Book Appointment
-          </button>
+          <Link href={{
+            pathname: '/patient/dashboard/book-appointment',
+            query: {
+              id: _id,
+              name
+            }
+          }}> Book Appointment</Link>
+         
         </div>
 
         <div>

@@ -13,7 +13,7 @@ const actions = doctors => {
       id,
       type: 'link',
       label: 'Book',
-      link: `doctors/${id}/book-appointment`,
+      link: `/patient/dashboard/book-appointment`,
       query: {
         id,
         name

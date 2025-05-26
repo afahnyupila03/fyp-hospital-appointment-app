@@ -16,14 +16,14 @@ export default function Table ({
       </thead>
       <tbody>
         {tableData}
-        
-        {isFirstPage && isLastPage ? (
+
+        {totalPages > 0 ? (
           <tr>
             <td colSpan={6} className='py-6 px-6 text-right'>
               <button
                 onClick={prevPageHandler}
                 disabled={isFirstPage}
-                className='px-4 py-2 bg-gray-300 rounded disabled:opacity-50'
+                className='px-4 py-2 bg-gray-300 cursor-pointer rounded disabled:opacity-50'
               >
                 Previous
               </button>
@@ -33,7 +33,7 @@ export default function Table ({
               <button
                 onClick={nextPageHandler}
                 disabled={isLastPage}
-                className='px-4 py-2 bg-gray-300 rounded disabled:opacity-50'
+                className='px-4 py-2 bg-gray-300 cursor-pointer rounded disabled:opacity-50'
               >
                 Next
               </button>
