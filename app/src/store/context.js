@@ -234,7 +234,7 @@ export const AppProvider = ({ children }) => {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("No authenticated token found");
 
-      await fetch(getApiUrl(role, "logout"), {
+      const user = await fetch(getApiUrl(role, "logout"), {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });

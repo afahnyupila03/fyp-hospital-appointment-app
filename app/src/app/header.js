@@ -5,6 +5,7 @@ import { Dialog, DialogPanel, PopoverGroup } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { AppState } from '@/store/context'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 import {
   useDoctorNotifications,
@@ -57,8 +58,10 @@ const redirectByUserRole = user => {
 }
 
 export const Header = () => {
-  const { user, loading } = AppState()
+  const { user, loading, signoutHandler } = AppState()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  const router = useRouter()
 
   const isDoctor = user?.role === 'doctor'
   const isPatient = user?.role === 'patient'
@@ -149,6 +152,17 @@ export const Header = () => {
   }
   console.log('notifications: ', notifications, ' count: ', notificationCount)
 
+  const logoutHandler = async user => {
+    if (!user) return
+
+    const role = user?.role
+
+    console.log('logging out user with role: ', role)
+    await signoutHandler(role)
+    console.log('logout complete for user with role: ', role)
+    router.replace(`/patient/${role}`)
+  }
+
   return (
     <header className='bg-white'>
       <nav
@@ -207,6 +221,7 @@ export const Header = () => {
               <button
                 type='button'
                 className='px-4 py-2 bg-red-500 text-white rounded'
+                onClick={() => logoutHandler(user)}
               >
                 Logout big
               </button>
