@@ -130,6 +130,7 @@ export default function UpdateAppointmentPage () {
     await updateAppointment({ id, payload })
     console.log('appointment update success')
     refetch()
+    router.push('/patient/dashboard/appointments')
   }
 
   return (

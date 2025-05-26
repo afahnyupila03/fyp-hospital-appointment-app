@@ -7,18 +7,23 @@ import { useState } from 'react'
 
 const actions = doctors => {
   const id = doctors._id
+  const name = doctors.name
   return [
     {
       id,
       type: 'link',
       label: 'Book',
-      link: `${id}/book-appointment`
+      link: `doctors/${id}/book-appointment`,
+      query: {
+        id,
+        name
+      }
     },
     {
       id,
       type: 'link',
       label: 'View',
-      link: `${id}`
+      link: `doctors/${id}`
     }
   ]
 }
@@ -50,7 +55,7 @@ export default function DoctorsPage () {
   )
 
   const tableData = doctors.map((doctor, index) => (
-    <tr>
+    <tr key={doctor._id}>
       <td>{index + 1}</td>
       <td>{doctor.name}</td>
       <td>{doctor.specialization}</td>

@@ -92,7 +92,7 @@ exports.viewAppointment = async (req, res) => {
 
 exports.createAppointment = async (req, res) => {
   try {
-    const io = socket.getIo()
+    const io = Socket.getIo()
 
     const patientId = req.user.id
     const user = await User.findById(patientId)
@@ -133,7 +133,7 @@ exports.createAppointment = async (req, res) => {
       sender: patientId,
       receiver: doctorId,
       type: 'appointment_request',
-      message: `Appointment request from patient ${patientId.name}.`,
+      message: `Appointment request from patient ${user.name}.`,
       appointment: createdAppointment._id
     })
     // Patient notification.

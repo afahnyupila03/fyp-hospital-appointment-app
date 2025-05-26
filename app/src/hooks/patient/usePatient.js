@@ -7,6 +7,7 @@ import {
   viewDoctorsService
 } from '@/api/appointment/patient/service'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { usePatientNotifications } from './usePatientNotification'
 
 export const usePatientDoctors = (page, limit) => {
   return useQuery({
@@ -30,25 +31,32 @@ export const usePatientDoctor = id => {
 export const useCreateAppointment = () => {
   const queryClient = useQueryClient()
 
+  const { refetch } = usePatientNotifications()
+
   return useMutation({
     mutationFn: ({ data }) => createAppointmentService(data),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['appointments'] })
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['appointments'] })
+      await refetch()
+    }
   })
 }
 
 export const useUpdatePatientAppointment = () => {
   const queryClient = useQueryClient()
 
+  const { refetch } = usePatientNotifications()
+
   return useMutation({
-    mutationFn: ({ id, payload }) => updateAppointmentService(id,  payload ),
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({
+    mutationFn: ({ id, payload }) => updateAppointmentService(id, payload),
+    onSuccess: async (_, { id }) => {
+      await queryClient.invalidateQueries({
         queryKey: ['appointments']
       })
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['appointment', id]
       })
+      await fetch()
     }
   })
 }

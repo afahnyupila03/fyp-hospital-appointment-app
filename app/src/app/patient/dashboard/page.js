@@ -27,7 +27,10 @@ const appointmentActions = appointment => {
         id,
         type: 'link',
         label: 'Update',
-        link: `/patient/dashboard/book-appointment/${id}?editing=true`
+        link: `/patient/dashboard/book-appointment/${id}`,
+        query: {
+          editing: true
+        }
       },
       {
         id,
@@ -52,19 +55,24 @@ const appointmentActions = appointment => {
 
 const doctorsActions = doctors => {
   const id = doctors._id
+  const name = doctors.name
 
   return [
     {
       id,
       type: 'link',
-      label: 'View',
-      link: `/patient/dashboard/doctors/${id}`
+      label: 'Book',
+      link: '/patient/dashboard/book-appointment',
+      query: {
+        id,
+        name
+      }
     },
     {
       id,
       type: 'link',
-      label: 'Book',
-      link: `/patient/dashboard/doctors/${id}/book-appointment`
+      label: 'View',
+      link: `/patient/dashboard/doctors/${id}`
     }
   ]
 }
@@ -292,10 +300,6 @@ export default function PatientDashboardPage () {
             backgroundColor: index % 2 === 0 ? '#ceceff' : '#e6e6ff'
           }}
           key={doctor._id}
-          className='cursor-pointer'
-          onClick={() =>
-            router.push(`/patient/dashboard/doctors/${doctor._id}`)
-          }
         >
           <td>{index + 1}</td>
           <td>{doctor.name}</td>
@@ -303,6 +307,9 @@ export default function PatientDashboardPage () {
           <td
             className='cursor-pointer'
             title="Click to view the doctor's profile and hospital schedule"
+            onClick={() =>
+              router.push(`/patient/dashboard/doctors/${doctor._id}`)
+            }
           >
             {doctor.schedules.slice(0, 1)?.map(schedule => (
               <span key={schedule._id}>

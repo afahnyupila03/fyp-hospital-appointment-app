@@ -6,9 +6,16 @@ import {
   usePatientDoctors
 } from '@/hooks/patient/usePatient'
 import { Form, Formik } from 'formik'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
 export default function BookAppointmentPage () {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const id = searchParams.get('id')
+  const name = searchParams.get('name')
+  console.log(id, name)
+
   const [selectedDoctor, setSelectedDoctor] = useState('')
   const [doctorSchedule, setDoctorSchedule] = useState([])
 
@@ -27,6 +34,18 @@ export default function BookAppointmentPage () {
     }
   }, [selectedDoctor, data])
 
+  // useEffect for doctorId && doctorName as query to book appointment.
+  useEffect(() => {
+    if (id && name && data?.doctors) {
+      const doctor = data?.doctors.find(doc => doc._id === id)
+      console.log('query doctor: ', doctor)
+      if (doctor) {
+        setSelectedDoctor(doctor._id)
+        setDoctorSchedule(selectedDoctor.schedules || [])
+      }
+    }
+  }, [id, name, data?.doctors])
+
   const { mutateAsync: bookAppointment } = useCreateAppointment()
 
   const bookAppointmentHandler = async values => {
@@ -42,6 +61,12 @@ export default function BookAppointmentPage () {
       console.log('creating appointment...')
       await bookAppointment({ data })
       console.log('appointment created.')
+
+      if (id && name) {
+        router.push('/patient/dashboard')
+      } else {
+        router.push('/patient/dashboard/appointments')
+      }
     } catch (error) {
       console.error('error booking appointment: ', error)
       throw new Error(error)
@@ -60,13 +85,23 @@ export default function BookAppointmentPage () {
   return (
     <div>
       <Formik
-        initialValues={{
-          doctor: '',
-          time: '',
-          day: '',
-          reason: '',
-          notes: ''
-        }}
+        initialValues={
+          id && name
+            ? {
+                doctor: id,
+                time: '',
+                day: '',
+                reason: '',
+                notes: ''
+              }
+            : {
+                doctor: '',
+                time: '',
+                day: '',
+                reason: '',
+                notes: ''
+              }
+        }
         onSubmit={bookAppointmentHandler}
       >
         {({
@@ -86,43 +121,58 @@ export default function BookAppointmentPage () {
               <span>*</span>
             </p>
 
-            <CustomInput
-              as='select'
-              id='doctor'
-              name='name'
-              label='Select doctor'
-              onChange={e => {
-                const selected = e.target.value
-                setSelectedDoctor(selected)
-                setFieldValue('doctor', selected)
-              }}
-              onBlur={handleBlur}
-              value={values.doctor}
-              errors={errors}
-              touched={touched}
-            >
-              <option value=''>Select doctor</option>
-              {isLoading ? (
-                <option disabled>Loading doctors...</option>
-              ) : isError ? (
-                <option disabled>{error}</option>
-              ) : (data && data?.count) === 0 ? (
-                <option disabled>No registered doctors</option>
-              ) : (
-                data?.doctors.map(doctor => (
-                  <option key={doctor._id} value={doctor._id}>
-                    {doctor.name}
-                  </option>
-                ))
-              )}
-            </CustomInput>
+            {id && name ? (
+              <CustomInput
+                readOnly='true'
+                label='Doctor'
+                id='doctor'
+                name='doctor'
+                type='text'
+                onChange={handleChange}
+                onBlur={handleBlur}
+                errors={errors}
+                touched={touched}
+                value={name}
+              />
+            ) : (
+              <CustomInput
+                as='select'
+                id='doctor'
+                name='name'
+                label='Select doctor'
+                onChange={e => {
+                  const selected = e.target.value
+                  setSelectedDoctor(selected)
+                  setFieldValue('doctor', selected)
+                }}
+                onBlur={handleBlur}
+                value={values.doctor}
+                errors={errors}
+                touched={touched}
+              >
+                <option value=''>Select doctor</option>
+                {isLoading ? (
+                  <option disabled>Loading doctors...</option>
+                ) : isError ? (
+                  <option disabled>{error}</option>
+                ) : (data && data?.count) === 0 ? (
+                  <option disabled>No registered doctors</option>
+                ) : (
+                  data?.doctors.map(doctor => (
+                    <option key={doctor._id} value={doctor._id}>
+                      {doctor.name}
+                    </option>
+                  ))
+                )}
+              </CustomInput>
+            )}
 
             {/* Display selected doctor's available days */}
             {doctorSchedule.length > 0 && (
               <div className='mb-4'>
                 <h4 className='font-semibold'>Doctor Availability</h4>
                 <ul className='list-disc list-inside'>
-                  {doctorSchedule.map((s) => (
+                  {doctorSchedule.map(s => (
                     <li key={s._id}>
                       <span className='font-medium'>{s.day}:</span>
                     </li>

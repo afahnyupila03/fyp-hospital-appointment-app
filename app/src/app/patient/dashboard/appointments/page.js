@@ -45,8 +45,9 @@ export default function PatientAppointments () {
         {
           id,
           type: 'link',
-          link: `/patient/dashboard/book-appointment/${id}?editing=true`,
-          label: 'Update'
+          link: `/patient/dashboard/book-appointment/${id}`,
+          label: 'Update',
+          query: { editing: true }
         }
       ]
     }
