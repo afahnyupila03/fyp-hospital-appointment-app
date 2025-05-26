@@ -41,7 +41,7 @@ export const useUpdatePatientAppointment = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, data }) => updateAppointmentService(id, { data }),
+    mutationFn: ({ id, payload }) => updateAppointmentService(id,  payload ),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({
         queryKey: ['appointments']

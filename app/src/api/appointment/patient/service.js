@@ -62,17 +62,20 @@ export const viewAppointmentService = async id => {
   return appointment
 }
 
-export const updateAppointmentService = async (id, formData) => {
+export const updateAppointmentService = async (id, payload) => {
   const res = await fetch(
     `http://localhost:4000/patient/update-appointment/${id}`,
     {
       method: 'PUT',
       headers: getHeaders(),
-      body: JSON.stringify(formData)
+      body: JSON.stringify(payload)
     }
   )
-  if (!res.ok) throw new Error('Error fetching doctor appointment')
+
   const data = await res.json()
+
+  if (!res.ok) throw new Error(data.error || data.message)
+
   const updatedAppointment = data.updatedAppointment
 
   return updatedAppointment
@@ -121,7 +124,7 @@ export const viewDoctorService = async id => {
     const data = await res.json()
 
     if (!res.ok) {
-      throw new Error(data.error)
+      throw new Error(data.error || data.message)
     }
 
     const doctor = data.doctor

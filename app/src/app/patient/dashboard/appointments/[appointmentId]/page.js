@@ -1,3 +1,4 @@
-export default function PatientAppointmentPage () {
-  return <div>Patient appointment page.</div>
+export default async function PatientAppointmentPage ({ params }) {
+  const { appointmentId } = await params
+  return <div>Patient appointment page: {appointmentId}.</div>
 }

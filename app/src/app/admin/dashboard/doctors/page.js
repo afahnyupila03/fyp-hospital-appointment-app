@@ -79,7 +79,7 @@ export default function DoctorsHomePage() {
               </p>
             </div>
 
-            <Link href={`/admin/dashboard/doctors/${_id}`}>View Profile</Link>
+            <Link href={`doctors/${_id}`}>View Profile</Link>
           </div>
         );
       })}

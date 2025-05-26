@@ -122,8 +122,8 @@ export default function BookAppointmentPage () {
               <div className='mb-4'>
                 <h4 className='font-semibold'>Doctor Availability</h4>
                 <ul className='list-disc list-inside'>
-                  {doctorSchedule.map((s, i) => (
-                    <li key={i}>
+                  {doctorSchedule.map((s) => (
+                    <li key={s._id}>
                       <span className='font-medium'>{s.day}:</span>
                     </li>
                   ))}
@@ -137,7 +137,7 @@ export default function BookAppointmentPage () {
                 name='day'
                 type='date'
                 label='Day'
-                placeholder='Eg Tuesday 12 May'
+                placeholder='Appointment date'
                 onChange={e => {
                   const inputDate = new Date(e.target.value)
                   const today = new Date()
@@ -216,7 +216,7 @@ export default function BookAppointmentPage () {
 
             <CustomInput
               label='Note'
-              placeholder='Please explain'
+              placeholder='Please give a brief explain'
               id='notes'
               name='notes'
               value={values.notes}

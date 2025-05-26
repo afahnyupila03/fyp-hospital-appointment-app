@@ -27,7 +27,7 @@ const appointmentActions = appointment => {
         id,
         type: 'link',
         label: 'Update',
-        link: `/patient/dashboard/book-appointment/${id}`
+        link: `/patient/dashboard/book-appointment/${id}?editing=true`
       },
       {
         id,

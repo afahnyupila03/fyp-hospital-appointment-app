@@ -9,7 +9,7 @@ import {
 import Link from "next/link";
 
 export const DoctorId = ({ id }) => {
-  const { data, isLoading, isError, error } = useDoctorData(id);
+  const { data, isLoading, isError, error, refetch } = useDoctorData(id);
 
   const { mutateAsync: archiveDoctor } = useArchiveDoctor();
   const { mutateAsync: unarchiveDoctor } = useUnarchiveDoctor();
@@ -25,6 +25,7 @@ export const DoctorId = ({ id }) => {
     department,
     isActive,
     appointments,
+    
   } = data;
 
   const appointmentCounter = appointments.length;
@@ -33,7 +34,7 @@ export const DoctorId = ({ id }) => {
   const archiveDoctorHandler = async (id) => {
     try {
       await archiveDoctor({ id, isActive: false });
-      window.location.reload();
+      refetch();
     } catch (error) {
       console.error("archive handler error", error);
       throw error;
@@ -43,7 +44,7 @@ export const DoctorId = ({ id }) => {
   const unarchiveDoctorHandler = async (id) => {
     try {
       await unarchiveDoctor({ id, isActive: true });
-      window.location.reload();
+      refetch();
     } catch (error) {
       console.error("error un-archiving doctor: ", error);
       throw error;
@@ -74,7 +75,7 @@ export const DoctorId = ({ id }) => {
       >
         {isActive === true ? "Archive" : "Unarchive"}
       </button>
-      <Link href={`/admin/dashboard/doctors/create-doctor/${_id}`}>
+      <Link href={`/admin/dashboard/doctors/create-doctor/${_id}?editing=true`}>
         Update profile
       </Link>
 
