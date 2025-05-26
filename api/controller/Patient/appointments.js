@@ -4,7 +4,7 @@ const Appointment = require('../../models/appointment')
 const User = require('../../models/user')
 const Doctor = require('../../models/doctor')
 const Notification = require('../../models/notification')
-const socket = require('../../socket')
+const Socket = require('../../socket')
 
 exports.viewAppointments = async (req, res) => {
   try {
@@ -45,24 +45,31 @@ exports.viewAppointments = async (req, res) => {
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: 'Error loading all your appointments',
-      error: error
+      error: error.message
     })
   }
 }
 
 exports.viewAppointment = async (req, res) => {
   try {
-    const user = req.user
+    const user = req.user.id
     const { id } = req.params
 
     let query = { _id: id }
 
     if (user.role === 'patient') {
-      query.patientId = user.id
+      query.patientId = user
     }
 
     const appointment = await Appointment.findOne(query)
-      .populate('doctorId', 'email name specialization department')
+      .populate({
+        path: 'doctorId',
+        select: 'email name specialization department schedules',
+        populate: {
+          path: 'schedules',
+          model: 'Schedule'
+        }
+      })
       .populate('patientId', 'email name reason notes')
 
     if (!appointment) {
@@ -78,26 +85,26 @@ exports.viewAppointment = async (req, res) => {
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: 'Error loading patient appointment',
-      error: error
+      error: error.message
     })
   }
 }
 
 exports.createAppointment = async (req, res) => {
   try {
-    const io = socket.getIo()
+    const io = Socket.getIo()
 
     const patientId = req.user.id
     const user = await User.findById(patientId)
     const { date, timeSlot, reason, doctor, notes } = req.body
 
-    const doc = await Doctor.findOne({ name: doctor })
-    if (!doc) {
+    const doctorId = await Doctor.findById(doctor)
+    if (!doctorId) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         message: 'selected doctor does not exist'
       })
     }
-    const doctorId = doc._id
+    // const doctorId = doc._id
 
     if (!user) {
       return res.status(StatusCodes.BAD_REQUEST).json({
@@ -118,7 +125,7 @@ exports.createAppointment = async (req, res) => {
 
     // Push appointment to both patient and doctor.
     user.appointments.push(appointment._id)
-    doc.appointments.push(appointment._id)
+    doctorId.appointments.push(appointment._id)
 
     // create notification and push notification.
     // Doctor notification.
@@ -126,7 +133,7 @@ exports.createAppointment = async (req, res) => {
       sender: patientId,
       receiver: doctorId,
       type: 'appointment_request',
-      message: `Appointment request from patient ${patientId.name}.`,
+      message: `Appointment request from patient ${user.name}.`,
       appointment: createdAppointment._id
     })
     // Patient notification.
@@ -146,9 +153,9 @@ exports.createAppointment = async (req, res) => {
     user.markModified('notifications')
     await user.save()
 
-    doc.notifications.push(savedDoctorNotification._id)
-    doc.markModified('notifications')
-    await doc.save()
+    doctorId.notifications.push(savedDoctorNotification._id)
+    doctorId.markModified('notifications')
+    await doctorId.save()
 
     appointment.notifications.push(
       savedPatientNotification._id,
@@ -170,13 +177,15 @@ exports.createAppointment = async (req, res) => {
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: 'Error creating patient appointment',
-      error: error
+      error: error.message
     })
   }
 }
 
 exports.updateAppointment = async (req, res) => {
   try {
+    const io = Socket.getIo()
+
     const user = req.user.id
     const { doctor, date, timeSlot, reason, notes } = req.body
     const { id } = req.params
@@ -200,7 +209,7 @@ exports.updateAppointment = async (req, res) => {
     // Handle doctor change
     let newDoctor
     if (doctor) {
-      newDoctor = await Doctor.findOne({ name: doctor })
+      newDoctor = await Doctor.findById(doctor)
       if (!newDoctor) {
         return res.status(StatusCodes.BAD_REQUEST).json({
           message: 'No doctor found'
@@ -229,11 +238,6 @@ exports.updateAppointment = async (req, res) => {
     if (reason) appointment.reason = reason
     if (notes) appointment.notes = notes
 
-    appointment.notifications.push(
-      savedPatientNotification._id,
-      savedDoctorNotification._id
-    )
-
     const updatedAppointment = await appointment.save()
 
     // Create and push notification for doctor and patient.
@@ -259,7 +263,12 @@ exports.updateAppointment = async (req, res) => {
     const [savedDoctorNotification, savedPatientNotification] =
       await Promise.all([patientNotification.save(), doctorNotification.save()])
 
-    await User.findByIdAndUpdate(user.id, {
+    appointment.notifications.push(
+      savedPatientNotification._id,
+      savedDoctorNotification._id
+    )
+
+    await User.findByIdAndUpdate(user, {
       $addToSet: { notifications: savedPatientNotification._id }
     })
     await Doctor.findByIdAndUpdate(appointment.doctorId, {
@@ -281,7 +290,7 @@ exports.updateAppointment = async (req, res) => {
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: 'Error updating patient appointment',
-      error: error
+      error: error.message
     })
   }
 }
@@ -323,7 +332,7 @@ exports.viewDoctors = async (req, res) => {
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: 'Error finding doctors',
-      error: error
+      error: error.message
     })
   }
 }
@@ -331,8 +340,15 @@ exports.viewDoctors = async (req, res) => {
 exports.viewDoctor = async (req, res) => {
   try {
     const { id } = req.params
+    const patientId = req.user.id
 
-    const doctor = await Doctor.findOne({ _id: id })
+    if (!patientId) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        message: 'Unauthorized action. Authenticate account to perform action.'
+      })
+    }
+
+    const doctor = await Doctor.findById(id).populate('schedules')
 
     if (!doctor) {
       return res.status(StatusCodes.NOT_FOUND).json({
@@ -347,7 +363,7 @@ exports.viewDoctor = async (req, res) => {
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: 'error viewing doctor profile',
-      error: error
+      error: error.message
     })
   }
 }

@@ -99,7 +99,7 @@ export const AppProvider = ({ children }) => {
           dispatch({ type: CONSTANTS.SIGN_OUT });
         }
 
-        throw new Error(data.message || "Failed to fetch current user");
+        throw new Error(data.error || "Failed to fetch current user");
       }
 
       const data = await res.json();

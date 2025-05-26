@@ -6,7 +6,7 @@ const { StatusCodes } = require("http-status-codes");
 
 exports.createDoctor = async (req, res) => {
   try {
-    const user = req.user;
+    const adminId = req.user.id;
     const { name, email, password, specialization, department, schedule } =
       req.body;
 
@@ -32,7 +32,7 @@ exports.createDoctor = async (req, res) => {
       password: hashPassword,
       specialization,
       department,
-      createdBy: user.id,
+      createdBy: adminId,
     });
 
     const savedDoctor = await doctor.save();

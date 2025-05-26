@@ -27,7 +27,10 @@ const appointmentActions = appointment => {
         id,
         type: 'link',
         label: 'Update',
-        link: `/patient/dashboard/book-appointment/${id}`
+        link: `/patient/dashboard/book-appointment/${id}`,
+        query: {
+          editing: true
+        }
       },
       {
         id,
@@ -52,19 +55,24 @@ const appointmentActions = appointment => {
 
 const doctorsActions = doctors => {
   const id = doctors._id
+  const name = doctors.name
 
   return [
     {
       id,
       type: 'link',
-      label: 'View',
-      link: `/patient/dashboard/doctors/${id}`
+      label: 'Book',
+      link: '/patient/dashboard/book-appointment',
+      query: {
+        id,
+        name
+      }
     },
     {
       id,
       type: 'link',
-      label: 'Book',
-      link: `/patient/dashboard/doctors/${id}/book-appointment`
+      label: 'View',
+      link: `/patient/dashboard/doctors/${id}`
     }
   ]
 }
@@ -85,6 +93,13 @@ const getStatusCounts = appointments => {
   })
 
   return counts
+}
+
+const statusColors = {
+  pending: '#facc15', // yellow
+  confirmed: '#22c55e', // green
+  completed: '#3b82f6', // blue
+  canceled: '#ef4444' // red
 }
 
 export default function PatientDashboardPage () {
@@ -243,11 +258,16 @@ export default function PatientDashboardPage () {
     </>
   )
   const appointmentTableData =
-    appointments?.appointments.length === 0 ? (
+    appointments?.count === 0 ? (
       <tr>No Booked appointments</tr>
     ) : (
       appointments?.appointments?.map((appointment, index) => (
-        <tr key={appointment._id}>
+        <tr
+          style={{
+            backgroundColor: statusColors[appointment.status?.toLowerCase()]
+          }}
+          key={appointment._id}
+        >
           <td>{index + 1}</td>
           <td>{appointment.doctorId.name}</td>
           <td>{appointment.date}</td>
@@ -271,7 +291,7 @@ export default function PatientDashboardPage () {
     </>
   )
   const doctorsTableData =
-    doctors?.doctors.length === 0 ? (
+    doctors?.count === 0 ? (
       <tr>No registered doctors in system</tr>
     ) : (
       doctors?.doctors?.map((doctor, index) => (
@@ -280,10 +300,6 @@ export default function PatientDashboardPage () {
             backgroundColor: index % 2 === 0 ? '#ceceff' : '#e6e6ff'
           }}
           key={doctor._id}
-          className='cursor-pointer'
-          onClick={() =>
-            router.push(`/patient/dashboard/doctors/${doctor._id}`)
-          }
         >
           <td>{index + 1}</td>
           <td>{doctor.name}</td>
@@ -291,6 +307,9 @@ export default function PatientDashboardPage () {
           <td
             className='cursor-pointer'
             title="Click to view the doctor's profile and hospital schedule"
+            onClick={() =>
+              router.push(`/patient/dashboard/doctors/${doctor._id}`)
+            }
           >
             {doctor.schedules.slice(0, 1)?.map(schedule => (
               <span key={schedule._id}>
