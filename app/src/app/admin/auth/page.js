@@ -38,7 +38,7 @@ export default function AdminAuth () {
 
       await signupHandler(values, role)
       console.log('SIGNED_UP_USER: ', user)
-      router.replace('/admin/dashboard')
+      // router.replace('/admin/dashboard') // Handled in the context file.
       actions.resetForm()
     } catch (error) {
       console.error('SIGNED_UP_USER_ERROR: ', error.message)
@@ -64,7 +64,7 @@ export default function AdminAuth () {
       }
 
       await signinHandler(email, password, role)
-      router.replace('/admin/dashboard')
+      // router.replace('/admin/dashboard') // Handled in the context file.
       actions.resetForm()
     } catch (error) {
       console.error('SIGNED_IN_USER_ERROR: ', error)

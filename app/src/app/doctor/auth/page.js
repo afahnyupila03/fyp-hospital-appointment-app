@@ -29,7 +29,7 @@ export default function DoctorAuthPage() {
 
        await signinHandler(email, password, role);
       console.log("doctor success login...");
-      router.replace("/doctor/dashboard");
+      // router.replace("/doctor/dashboard"); // Handled in the context file.
       actions.resetForm();
     } catch (error) {
       console.error("Error login to doctor account: ", error);
