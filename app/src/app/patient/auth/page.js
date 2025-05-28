@@ -24,7 +24,7 @@ export default function PatientAuthPage () {
 
   const signupPatientHandler = async () => {
     try {
-      setLoading(true)
+      // setLoading(true)
 
       const role = 'patient'
 
@@ -52,9 +52,9 @@ export default function PatientAuthPage () {
         }
       })
 
-      router.replace('/patient/dashboard')
+      // router.replace('/patient/dashboard') // Handled in the context file.
 
-      setLoading(false)
+      // setLoading(false)
     } catch (error) {
       console.error('patient signup login: ', error)
       actions.setSubmitting(false)
@@ -65,7 +65,7 @@ export default function PatientAuthPage () {
   const loginPatientHandler = async (values, actions) => {
     const role = 'patient'
     try {
-      setLoading(true)
+      // setLoading(true)
       const email = values.email.trim()
       const password = values.password
 
@@ -83,8 +83,8 @@ export default function PatientAuthPage () {
         }
       })
 
-      router.replace('/patient/dashboard')
-      setLoading(false)
+      // router.replace('/patient/dashboard') // Handled in the context file.
+      // setLoading(false)
     } catch (error) {
       console.error('patient login error: ', error)
       actions.setSubmitting(false)
@@ -110,7 +110,6 @@ export default function PatientAuthPage () {
       onSubmit={existingUser ? signupPatientHandler : loginPatientHandler}
       validationSchema={existingUser ? signupSchema : signinSchema}
     >
-
       {({
         values,
         handleBlur,
@@ -180,7 +179,6 @@ export default function PatientAuthPage () {
           </div>
         </Form>
       )}
-      
     </Formik>
   )
 }
