@@ -10,155 +10,136 @@ export default function AdminAuth () {
   const { signupHandler, signinHandler } = AppState()
   const [existingUser, setExistingUser] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-
   const router = useRouter()
 
   const handleExistingUser = () => {
     setTimeout(() => {
-      setExistingUser(prevState => !prevState)
+      setExistingUser(prev => !prev)
     }, 500)
   }
 
   const handleSignup = async (values, actions) => {
-    console.log(values)
     try {
       const role = 'admin'
-
-      const email = (values.email || '').trim()
+      const email = values.email.trim()
       const password = values.password
-      const name = (values.name || '').trim()
+      const name = values.name.trim()
 
-      if (!name) throw new Error('Name is required')
-      if (name.length < 6) throw new Error('Name must be at least 6 characters')
-
+      if (!name || name.length < 6)
+        throw new Error('Name must be at least 6 characters')
       if (!email) throw new Error('Email is required')
-      if (!password) throw new Error('Password is required')
-      if (password.length < 5)
+      if (!password || password.length < 6)
         throw new Error('Password must be at least 6 characters')
 
       await signupHandler(values, role)
-      console.log('SIGNED_UP_USER: ', user)
-      // router.replace('/admin/dashboard') // Handled in the context file.
       actions.resetForm()
     } catch (error) {
       console.error('SIGNED_UP_USER_ERROR: ', error.message)
       actions.setSubmitting(false)
-      throw error
     }
   }
 
   const handleSignin = async (values, actions) => {
     try {
       const role = 'admin'
-
-      const email = values.email
-      const password = values.password
-
-      if (!email) {
-        const error = new Error('Email is required')
-        throw error
-      }
-      if (!password) {
-        const error = new Error('Password is required')
-        throw error
-      }
+      const { email, password } = values
+      if (!email || !password)
+        throw new Error('Email and password are required')
 
       await signinHandler(email, password, role)
-      // router.replace('/admin/dashboard') // Handled in the context file.
       actions.resetForm()
     } catch (error) {
-      console.error('SIGNED_IN_USER_ERROR: ', error)
-
+      console.error('SIGNED_IN_USER_ERROR: ', error.message)
       actions.setSubmitting(false)
-      throw error
     }
   }
 
   return (
-    <Formik
-      initialValues={{
-        email: '',
-        name: '',
-        password: ''
-      }}
-      validationSchema={existingUser ? signupSchema : signinSchema}
-      onSubmit={existingUser ? handleSignup : handleSignin}
-    >
-      {({
-        values,
-        handleChange,
-        handleBlur,
-        isSubmitting,
-        errors,
-        touched
-      }) => (
-        <Form>
-          {existingUser ? 'Create Account' : 'Log In'}
+    <div className='flex items-center justify-center min-h-screen bg-gray-100 px-4'>
+      <div className='w-full max-w-md bg-white p-8 rounded-xl shadow-md'>
+        <h2 className='text-2xl font-bold text-center text-gray-800 mb-6'>
+          {existingUser ? 'Create Admin Account' : 'Admin Log In'}
+        </h2>
 
-          {existingUser && (
-            <CustomInput
-              onChange={handleChange}
-              id='name'
-              name='name'
-              type='text'
-              onBlur={handleBlur}
-              value={values.name}
-              placeholder='Enter Name'
-              label='Name'
-              touched={touched}
-              errors={errors}
-            />
+        <Formik
+          initialValues={{ email: '', name: '', password: '' }}
+          validationSchema={existingUser ? signupSchema : signinSchema}
+          onSubmit={existingUser ? handleSignup : handleSignin}
+        >
+          {({
+            values,
+            handleChange,
+            handleBlur,
+            isSubmitting,
+            errors,
+            touched
+          }) => (
+            <Form className='space-y-5'>
+              {existingUser && (
+                <CustomInput
+                  onChange={handleChange}
+                  id='name'
+                  name='name'
+                  type='text'
+                  onBlur={handleBlur}
+                  value={values.name}
+                  placeholder='Enter full name'
+                  label='Name'
+                  touched={touched}
+                  errors={errors}
+                />
+              )}
+
+              <CustomInput
+                onChange={handleChange}
+                id='email'
+                name='email'
+                type='email'
+                onBlur={handleBlur}
+                value={values.email}
+                placeholder='Enter email address'
+                label='Email'
+                touched={touched}
+                errors={errors}
+              />
+
+              <CustomInput
+                onChange={handleChange}
+                id='password'
+                name='password'
+                type={showPassword ? 'text' : 'password'}
+                onBlur={handleBlur}
+                value={values.password}
+                placeholder='Enter password'
+                label='Password'
+                errors={errors}
+                touched={touched}
+                togglePassword={() => setShowPassword(!showPassword)}
+                showPassword={showPassword}
+              />
+
+              <div className='text-sm text-center text-gray-600'>
+                {existingUser ? 'Already have an account?' : 'New user?'}{' '}
+                <button
+                  type='button'
+                  className='text-blue-600 hover:underline ml-1'
+                  onClick={handleExistingUser}
+                >
+                  {existingUser ? 'Log in' : 'Create account'}
+                </button>
+              </div>
+
+              <button
+                className='w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-all duration-200'
+                type='submit'
+                disabled={isSubmitting}
+              >
+                {existingUser ? 'Sign Up' : 'Log In'}
+              </button>
+            </Form>
           )}
-          <CustomInput
-            onChange={handleChange}
-            id='email'
-            name='email'
-            type='email'
-            onBlur={handleBlur}
-            value={values.email}
-            placeholder='Enter email address'
-            label='Email'
-            errors={errors}
-            touched={touched}
-          />
-
-          <CustomInput
-            onChange={handleChange}
-            id='password'
-            name='password'
-            type={showPassword ? 'text' : 'password'}
-            onBlur={handleBlur}
-            value={values.password}
-            placeholder='Enter Password'
-            label='Password'
-            errors={errors}
-            touched={touched}
-            togglePassword={() => setShowPassword(!showPassword)}
-            showPassword={showPassword}
-          />
-
-          {}
-
-          <p className='block text-lg font-medium leading-6  text-red-500'>
-            {existingUser ? 'Already have an account ?' : 'New user ?'}
-          </p>
-          <button
-            className='block ml-2 text-lg font-medium leading-6 text-white'
-            type='button'
-            onClick={handleExistingUser}
-          >
-            {existingUser ? 'Log in' : 'Create account'}
-          </button>
-
-          <button
-            className='block text-lg font-medium leading-6 rounded-md p-4 mx-4 my-4 bg-gray-800 text-white'
-            type='submit'
-            disabled={isSubmitting && errors}
-          >
-            {existingUser ? 'Create Account' : 'Log in'}
-          </button>
-        </Form>
-      )}
-    </Formik>
+        </Formik>
+      </div>
+    </div>
   )
 }

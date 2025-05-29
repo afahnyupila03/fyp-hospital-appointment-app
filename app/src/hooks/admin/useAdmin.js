@@ -48,10 +48,10 @@ export const useDoctorsMeta = () => {
   })
 }
 
-export const usePatientsData = () => {
+export const usePatientsData = (page, limit) => {
   return useQuery({
     queryKey: ['patients'],
-    queryFn: getPatientsService,
+    queryFn: () => getPatientsService(page, limit),
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchInterval: false,
@@ -67,10 +67,10 @@ export const usePatientData = id => {
   })
 }
 
-export const useDoctorsData = () => {
+export const useDoctorsData = (page, limit) => {
   return useQuery({
     queryKey: ['doctors'],
-    queryFn: getDoctorsService,
+    queryFn: () => getDoctorsService(page, limit),
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchInterval: false,
@@ -89,10 +89,14 @@ export const useDoctorData = id => {
 export const useArchivePatient = () => {
   const queryClient = useQueryClient()
 
+  const { refetch } = usePatientsData()
+
   return useMutation({
     mutationFn: ({ id, isActive }) => archivePatientService(id, { isActive }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['archive-patient'] })
+    onSuccess: async (_, { id }) => {
+      await queryClient.invalidateQueries({ queryKey: ['patients'] })
+      await queryClient.invalidateQueries({ queryKey: ['patient', id] })
+      await refetch()
     }
   })
 }
@@ -100,12 +104,18 @@ export const useArchivePatient = () => {
 export const useUnarchivePatient = () => {
   const queryClient = useQueryClient()
 
+  const { refetch } = usePatientsData()
+
   return useMutation({
     mutationFn: ({ id, isActive }) => unarchivePatientService(id, { isActive }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['unarchive-patient']
+    onSuccess: async (_, { id }) => {
+      await queryClient.invalidateQueries({
+        queryKey: ['patients']
       })
+      await queryClient.invalidateQueries({
+        queryKey: ['patient', id]
+      })
+      await refetch()
     }
   })
 }
@@ -113,10 +123,13 @@ export const useUnarchivePatient = () => {
 export const useCreateDoctor = () => {
   const queryClient = useQueryClient()
 
+  const { refetch } = useDoctorsData()
+
   return useMutation({
     mutationFn: formData => createDoctorService(formData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['doctors'] })
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['doctors'] })
+      await refetch()
     }
   })
 }
@@ -124,10 +137,14 @@ export const useCreateDoctor = () => {
 export const useUpdateDoctor = () => {
   const queryClient = useQueryClient()
 
+  const { refetch } = useDoctorsData()
+
   return useMutation({
     mutationFn: ({ id, updatedData }) => updateDoctorService(id, updatedData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['doctors'] })
+    onSuccess: async (_, { id }) => {
+      await queryClient.invalidateQueries({ queryKey: ['doctors'] })
+      await queryClient.invalidateQueries({ queryKey: ['doctor', id] })
+      await refetch()
     }
   })
 }
@@ -135,12 +152,16 @@ export const useUpdateDoctor = () => {
 export const useArchiveDoctor = () => {
   const queryClient = useQueryClient()
 
+  const { refetch } = useDoctorsData()
+
   return useMutation({
     mutationFn: ({ id, isActive }) => archiveDoctorService(id, { isActive }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['archive-doctor']
+    onSuccess: async (_, { id }) => {
+      await queryClient.invalidateQueries({
+        queryKey: ['doctors']
       })
+      await queryClient.invalidateQueries({ queryKey: ['doctor', id] })
+      await refetch()
     }
   })
 }
@@ -148,12 +169,18 @@ export const useArchiveDoctor = () => {
 export const useUnarchiveDoctor = () => {
   const queryClient = useQueryClient()
 
+  const { refetch } = useDoctorsData()
+
   return useMutation({
     mutationFn: ({ id, isActive }) => unarchiveDoctorService(id, { isActive }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['unarchive-doctor']
+    onSuccess: async (_, { id }) => {
+      await queryClient.invalidateQueries({
+        queryKey: ['doctor', id]
       })
+      await queryClient.invalidateQueries({
+        queryKey: ['doctors']
+      })
+      await refetch()
     }
   })
 }

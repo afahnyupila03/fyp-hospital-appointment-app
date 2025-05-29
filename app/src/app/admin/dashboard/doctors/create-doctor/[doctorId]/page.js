@@ -30,8 +30,8 @@ export default function CreateDoctorPage () {
     name: '',
     email: '',
     password: '',
-    specialization: specialization,
-    department: department,
+    specialization: '',
+    department: '',
     schedule: [
       {
         day: '',
@@ -45,10 +45,10 @@ export default function CreateDoctorPage () {
       setInitialValues({
         name: docData.name || '',
         email: docData.email || '',
-        password: '', // Empty password when editing
+        password: '',
         specialization: docData.specialization || '',
         department: docData.department || '',
-        schedule: docData.schedule
+        schedule: docData.schedule || [{ day: '', times: [''] }]
       })
     }
   }, [isEditing, doctorId, docData])
@@ -57,31 +57,29 @@ export default function CreateDoctorPage () {
 
   const updateDoctorHandler = async (values, actions) => {
     try {
-      console.log('updating')
-      await updateDoctor({
-        id: doctorId,
-        updatedData: values
-      })
-      console.log('success update doctor profile')
+      await updateDoctor({ id: doctorId, updatedData: values })
       router.replace('/admin/dashboard/doctors')
-      actions.resetForm({
-        values: initialValues
-      })
+      actions.resetForm({ values: initialValues })
     } catch (error) {
       console.error('Error creating doctor profile: ', error)
       throw error
     }
   }
 
-  if (isLoading) return <p>Loading doctor information</p>
+  if (isLoading)
+    return (
+      <p className='text-center text-gray-500'>Loading doctor information...</p>
+    )
 
   return (
-    <div>
-      <h3>Create doctor profile.</h3>
+    <div className='max-w-3xl mx-auto px-6 py-10 bg-white shadow rounded-md'>
+      <h2 className='text-2xl font-semibold text-gray-800 mb-6'>
+        {isEditing ? 'Update Doctor Profile' : 'Create Doctor Profile'}
+      </h2>
 
       <Formik
         initialValues={initialValues}
-        enableReinitialize={true}
+        enableReinitialize
         // validationSchema={createDoctorSchema}
         onSubmit={updateDoctorHandler}
       >
@@ -94,111 +92,113 @@ export default function CreateDoctorPage () {
           isSubmitting,
           setFieldValue
         }) => (
-          <Form className='space-y-4'>
+          <Form className='space-y-6'>
             <CustomInput
-              placeholder='Doctor Name'
               label='Doctor Name'
-              value={values.name}
-              name='name'
               id='name'
+              name='name'
+              type='text'
+              placeholder="Enter doctor's name"
+              value={values.name}
               onChange={handleChange}
               onBlur={handleBlur}
               touched={touched}
               errors={errors}
-              type='text'
             />
 
             <CustomInput
-              placeholder='Doctor Email'
               label='Doctor Email'
-              value={values.email}
-              name='email'
               id='email'
+              name='email'
+              type='email'
+              placeholder="Enter doctor's email"
+              value={values.email}
               onChange={handleChange}
               onBlur={handleBlur}
               touched={touched}
               errors={errors}
-              type='email'
             />
 
-            {/* Specialization dropdown */}
-            <div>
-              <label>Specialization</label>
-              <select
-                name='specialization'
-                value={values.specialization}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                className='border rounded p-2 w-full'
-              >
-                <option value=''>Select specialization</option>
-                {specialization?.map(spec => (
-                  <option key={spec} value={spec}>
-                    {spec}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <CustomInput
+              as='select'
+              label='Specialization'
+              id='specialization'
+              name='specialization'
+              onChange={handleChange}
+              onBlur={handleBlur}
+              value={values.specialization}
+              errors={errors}
+              touched={touched}
+            >
+              <option value=''>Select specialization</option>
+              {specialization?.map(spec => (
+                <option key={spec} value={spec}>
+                  {spec}
+                </option>
+              ))}
+            </CustomInput>
 
-            {/* Department dropdown */}
-            <div>
-              <label>Department</label>
-              <select
-                name='department'
-                value={values.department}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                className='border rounded p-2 w-full'
-              >
-                <option value=''>Select department</option>
-                {department?.map(dept => (
-                  <option key={dept} value={dept}>
-                    {dept}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <CustomInput
+              as='select'
+              label='Department'
+              id='department'
+              name='department'
+              onChange={handleChange}
+              onBlur={handleBlur}
+              value={values.department}
+              errors={errors}
+              touched={touched}
+            >
+              <option value=''>Select department</option>
+              {department?.map(dept => (
+                <option key={dept} value={dept}>
+                  {dept}
+                </option>
+              ))}
+            </CustomInput>
 
-            {/* Schedule Array */}
             <div>
-              <h4>Schedule</h4>
+              <h3 className='text-lg font-semibold text-gray-700 mb-2'>
+                Schedule
+              </h3>
               <FieldArray name='schedule'>
                 {({ push, remove }) => (
                   <div className='space-y-6'>
                     {values.schedule?.map((scheduleItem, index) => (
-                      <div key={index} className='border p-4 rounded space-y-2'>
-                        {/* Day input */}
+                      <div
+                        key={index}
+                        className='border border-gray-200 rounded-md p-4 space-y-3 bg-gray-50'
+                      >
                         <CustomInput
-                          placeholder='Day (e.g., Monday)'
                           label='Day'
-                          value={scheduleItem.day}
-                          name={`schedule.${index}.day`}
                           id={`schedule.${index}.day`}
+                          name={`schedule.${index}.day`}
+                          type='text'
+                          placeholder='e.g., Monday'
+                          value={scheduleItem.day}
                           onChange={handleChange}
                           onBlur={handleBlur}
-                          touched={touched}
                           errors={errors}
-                          type='text'
+                          touched={touched}
                         />
 
-                        {/* Times array */}
                         <FieldArray name={`schedule.${index}.times`}>
                           {({ push: pushTime, remove: removeTime }) => (
-                            <div>
+                            <div className='space-y-2'>
                               {scheduleItem.times.map((time, timeIdx) => (
-                                <div key={timeIdx} className='flex gap-2 mb-2'>
+                                <div key={timeIdx} className='flex gap-2'>
                                   <input
                                     type='text'
                                     name={`schedule.${index}.times.${timeIdx}`}
                                     value={time}
                                     onChange={handleChange}
-                                    placeholder='e.g., 10:00 AM - 10:30 AM'
-                                    className='border p-2 rounded w-full'
+                                    placeholder='e.g., 10:00 AM - 11:00 AM'
+                                    className='flex-1 border border-gray-300 rounded px-3 py-2'
                                   />
                                   <button
                                     type='button'
                                     onClick={() => removeTime(timeIdx)}
-                                    className='text-red-500'
+                                    className='text-sm text-red-500 hover:underline'
                                   >
                                     Remove
                                   </button>
@@ -207,7 +207,7 @@ export default function CreateDoctorPage () {
                               <button
                                 type='button'
                                 onClick={() => pushTime('')}
-                                className='text-blue-500 mt-2'
+                                className='text-blue-500 text-sm mt-1 hover:underline'
                               >
                                 + Add Time Slot
                               </button>
@@ -218,7 +218,7 @@ export default function CreateDoctorPage () {
                         <button
                           type='button'
                           onClick={() => remove(index)}
-                          className='text-red-600 mt-2'
+                          className='text-red-600 text-sm hover:underline'
                         >
                           Remove Schedule
                         </button>
@@ -227,7 +227,7 @@ export default function CreateDoctorPage () {
                     <button
                       type='button'
                       onClick={() => push({ day: '', times: [''] })}
-                      className='text-green-600 mt-4'
+                      className='text-green-600 hover:underline text-sm'
                     >
                       + Add New Schedule
                     </button>
@@ -236,14 +236,15 @@ export default function CreateDoctorPage () {
               </FieldArray>
             </div>
 
-            {/* Submit */}
-            <button
-              type='submit'
-              disabled={isSubmitting}
-              className='bg-blue-600 text-white px-4 py-2 rounded mt-6'
-            >
-              {isSubmitting ? 'Updating...' : 'Update Doctor'}
-            </button>
+            <div className='pt-4'>
+              <button
+                type='submit'
+                disabled={isSubmitting}
+                className='bg-blue-600 hover:bg-blue-700 transition-colors text-white px-6 py-2 rounded shadow'
+              >
+                {isSubmitting ? 'Updating...' : 'Update Doctor'}
+              </button>
+            </div>
           </Form>
         )}
       </Formik>

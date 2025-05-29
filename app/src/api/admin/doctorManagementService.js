@@ -1,50 +1,56 @@
 const getHeaders = () => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("Invalid or expired user token");
+  const token = localStorage.getItem('token')
+  if (!token) throw new Error('Invalid or expired user token')
 
   return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
-};
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`
+  }
+}
 
-export const getDoctorsService = async () => {
+export const getDoctorsService = async (page, limit) => {
   try {
-    const res = await fetch("http://localhost:4000/admin/doctors", {
-      headers: getHeaders(),
-    });
-    console.log("doctors res: ", res);
+    const res = await fetch(
+      `http://localhost:4000/admin/doctors?page=${page}&limit=${limit}`,
+      {
+        headers: getHeaders()
+      }
+    )
+
+    const data = await res.json()
 
     if (!res.ok) {
-      throw new Error("Error fetching doctors from servers");
+      throw new Error(data.error || data.message)
     }
-    const data = await res.json();
-    console.log("doctors service data: ", data);
 
-    const doctors = data.doctors;
-    console.log("doctors data: ", doctors);
+    const doctors = data.doctors
+    const count = data.count
+    const currentPage = data.currentPage
+    const totalPages = data.totalPages
 
-    return doctors.map((doctor) => doctor);
+    return { doctors, count, currentPage, totalPages }
   } catch (error) {
-    console.error("Admin-Doctors: ", error.message);
-    throw error;
+    console.error('Admin-Doctors: ', error.message)
+    throw error
     // return []; // safe fallback
   }
-};
+}
 
-export const getDoctorService = async (id) => {
+export const getDoctorService = async id => {
   try {
     const res = await fetch(`http://localhost:4000/admin/doctor/${id}`, {
-      headers: getHeaders(),
-    });
+      headers: getHeaders()
+    })
+
+    const data = await res.json()
 
     if (!res.ok) {
-      throw new Error("Error fetching doctor profile from server");
+      throw new Error(data.error || data.message)
     }
 
-    const data = await res.json();
-    const doctor = data.doctor;
-    console.log("get doctor service: ", doctor);
+    
+    const doctor = data.doctor
+    console.log('get doctor service: ', doctor)
 
     /* if (Array.isArray(doctor)) {
       return {
@@ -53,101 +59,101 @@ export const getDoctorService = async (id) => {
       };
     } */
 
-    return doctor;
+    return doctor
   } catch (error) {
-    console.error("doctor query error: ", error.message);
-    throw error;
+    console.error('doctor query error: ', error.message)
+    throw error
   }
-};
+}
 
 export const updateDoctorService = async (id, updateData) => {
   try {
     const res = await fetch(`http://localhost:4000/admin/update-doctor/${id}`, {
-      method: "PUT",
+      method: 'PUT',
       headers: getHeaders(),
-      body: JSON.stringify(updateData),
-    });
+      body: JSON.stringify(updateData)
+    })
 
-    const data = await res.json();
+    const data = await res.json()
 
     if (!res.ok) {
-      throw new Error(data.message);
+      throw new Error(data.message)
     }
 
-    const doctor = data.doctor;
-    return doctor;
+    const doctor = data.doctor
+    return doctor
   } catch (error) {
-    console.error("error updating doctor service: ", error.message);
-    throw error;
+    console.error('error updating doctor service: ', error.message)
+    throw error
   }
-};
+}
 
-export const createDoctorService = async (formData) => {
+export const createDoctorService = async formData => {
   try {
-    const res = await fetch("http://localhost:4000/admin/create-doctor", {
-      method: "POST",
+    const res = await fetch('http://localhost:4000/admin/create-doctor', {
+      method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify(formData),
-    });
+      body: JSON.stringify(formData)
+    })
 
-    const data = await res.json();
+    const data = await res.json()
 
     if (!res.ok) {
-      throw new Error(data.message);
+      throw new Error(data.message)
     }
 
-    console.log("created doctor profile: ", data.doctor);
-    return data.doctor;
+    console.log('created doctor profile: ', data.doctor)
+    return data.doctor
   } catch (error) {
-    console.error("Error creating doctor profile: ", error);
-    throw error;
+    console.error('Error creating doctor profile: ', error)
+    throw error
   }
-};
+}
 
 export const archiveDoctorService = async (id, formData) => {
   try {
     const res = await fetch(
       `http://localhost:4000/admin/archive-doctor/${id}`,
       {
-        method: "PUT",
+        method: 'PUT',
         headers: getHeaders(),
-        body: JSON.stringify(formData),
+        body: JSON.stringify(formData)
       }
-    );
+    )
     if (!res.ok) {
-      throw new Error("failed to archive doctor profile");
+      throw new Error('failed to archive doctor profile')
     }
 
-    const data = await res.json();
-    const doctor = data.doctor;
+    const data = await res.json()
+    const doctor = data.doctor
 
-    return doctor;
+    return doctor
   } catch (error) {
-    console.error("Error archiving doctor: ", error.message);
-    throw error;
+    console.error('Error archiving doctor: ', error.message)
+    throw error
   }
-};
+}
 
 export const unarchiveDoctorService = async (id, formData) => {
   try {
     const res = await fetch(
       `http://localhost:4000/admin/unarchive-doctor/${id}`,
       {
-        method: "PUT",
+        method: 'PUT',
         headers: getHeaders(),
-        body: JSON.stringify(formData),
+        body: JSON.stringify(formData)
       }
-    );
+    )
     if (!res.ok) {
-      throw new Error("failed to unarchive doctor profile");
+      throw new Error('failed to unarchive doctor profile')
     }
 
-    const data = await res.json();
-    const doctor = data.doctor;
+    const data = await res.json()
+    const doctor = data.doctor
 
-    return doctor;
+    return doctor
   } catch (error) {
-    console.error("Error unarchiving doctor: ", error.message);
-    throw error;
+    console.error('Error unarchiving doctor: ', error.message)
+    throw error
   }
-};
+}

@@ -1,63 +1,134 @@
-"use client";
+'use client'
 
 import {
   useArchivePatient,
   usePatientsData,
-  useUnarchivePatient,
-} from "@/hooks/admin/useAdmin";
-import Link from "next/link";
+  useUnarchivePatient
+} from '@/hooks/admin/useAdmin'
+import Table from '@/components/Table'
+import Link from 'next/link'
+import { useState } from 'react'
+import Dropdown from '@/components/Dropdown'
 
-export default function PatientsHomePage() {
-  const { data, isLoading, isError, error, refetch } = usePatientsData();
+export default function PatientsHomePage () {
+  const [page, setPage] = useState(1)
+  const limit = 10
 
-  const { mutateAsync: archivePatient } = useArchivePatient();
-  const { mutateAsync: unarchivePatient } = useUnarchivePatient();
+  const { data, isLoading, isError, error, refetch, isFetching } =
+    usePatientsData(page, limit)
 
-  const archivePatientHandler = async (id) => {
+  const count = data?.count
+  const totalPages = data?.totalPages
+  const currentPage = data?.currentPage
+  const firstPage = page === 1
+  const lastPage = page === totalPages
+
+  const { mutateAsync: archivePatient } = useArchivePatient()
+  const { mutateAsync: unarchivePatient } = useUnarchivePatient()
+
+  const archivePatientHandler = async id => {
     try {
-      await archivePatient({ id, isActive: false });
-      window.location.reload();
+      await archivePatient({ id, isActive: false })
+      refetch()
     } catch (error) {
-      console.error("error archiving patient: ", error);
-      throw error;
+      console.error('Error archiving patient:', error)
     }
-  };
+  }
 
-  const unarchivePatientHandler = async (id) => {
+  const unarchivePatientHandler = async id => {
     try {
-      await unarchivePatient({ id, isActive: true });
-      window.location.reload();
+      await unarchivePatient({ id, isActive: true })
+      refetch()
     } catch (error) {
-      console.error("error un-archiving patient: ", error);
-      throw error;
+      console.error('Error un-archiving patient:', error)
     }
-  };
+  }
 
-  if (isLoading) return <p>Loading patients data</p>;
-  if (isError) return <p>Error loading patients, {error.message}</p>;
+  const actions = patient => {
+    const id = patient._id
+    const isActive = patient.isActive
+    return [
+      {
+        id,
+        type: 'link',
+        label: 'View',
+        link: `/admin/dashboard/patients/${id}`
+      },
+      {
+        id,
+        type: 'button',
+        label: isActive ? 'Archive' : 'Unarchive',
+        actionKey: isActive ? 'archive' : 'unarchive'
+      }
+    ]
+  }
+
+  const tableHeaders = (
+    <>
+      <th className='text-left px-4 py-2 w-[5%]'>S/N</th>
+      <th className='text-left px-4 py-2 w-[35%]'>Name</th>
+      <th className='text-left px-4 py-2 w-[40%]'>Email</th>
+      <th className='text-left px-4 py-2 w-[20%]'>Actions</th>
+    </>
+  )
+
+  const tableData =
+    count === 0 ? (
+      <tr>
+        <td
+          colSpan={4}
+          className='px-4 py-6 text-center text-gray-500 italic border-b'
+        >
+          No patients found.
+        </td>
+      </tr>
+    ) : (
+      data?.patients?.map((pat, index) => (
+        <tr
+          key={pat._id}
+          className='hover:bg-gray-50 border-b transition duration-150 ease-in-out'
+        >
+          <td className='px-4 py-2'>{(currentPage - 1) * limit + index + 1}</td>
+          <td className='px-4 py-2'>{pat.name}</td>
+          <td className='px-4 py-2'>{pat.email}</td>
+          <td className='px-4 py-2'>
+            <Dropdown
+              actions={actions(pat)}
+              actionHandler={actionKey =>
+                actionKey === 'archive'
+                  ? archivePatientHandler(pat._id)
+                  : unarchivePatientHandler(pat._id)
+              }
+            />
+          </td>
+        </tr>
+      ))
+    )
+
+  if (isLoading)
+    return <p className='text-center py-6'>Loading patients data...</p>
+  if (isError)
+    return (
+      <p className='text-center py-6 text-red-500'>Error: {error.message}</p>
+    )
 
   return (
-    <div>
-      {data?.patients?.map((patients) => (
-        <div key={patients._id}>
-          <p>Name: {patients.name}</p>
-          <p>Email: {patients.email}</p>
-          <p>Booked appointments: ({patients?.appointments.length})</p>
-          <Link href={`/admin/dashboard/patients/${patients._id}`}>
-            View Profile
-          </Link>
-          <button
-            type="button"
-            onClick={
-              patients.isActive === true
-                ? () => archivePatientHandler(patients._id)
-                : () => unarchivePatientHandler(patients._id)
-            }
-          >
-            {patients.isActive === true ? "Archive" : "Unarchive"}
-          </button>
-        </div>
-      ))}
+    <div className='p-6 max-w-6xl mx-auto'>
+      <div className='flex justify-between items-center mb-6'>
+        <h2 className='text-2xl font-semibold text-gray-800'>Patients List</h2>
+      </div>
+
+      <Table
+        isFetching={isFetching}
+        isFirstPage={firstPage}
+        isLastPage={lastPage}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        tableHeaders={tableHeaders}
+        tableData={tableData}
+        nextPageHandler={() => setPage(p => Math.min(p + 1, totalPages))}
+        prevPageHandler={() => setPage(p => Math.max(p - 1, 1))}
+      />
     </div>
-  );
+  )
 }

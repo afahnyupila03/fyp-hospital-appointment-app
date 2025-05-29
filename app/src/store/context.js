@@ -193,7 +193,7 @@ export const AppProvider = ({ children }) => {
 
       const data = await res.json()
       console.log('context data: ', data)
-      if (!res.ok) throw new Error(data.message || data.error)
+      if (!res.ok) throw new Error(data.error || data.message )
 
       const { token } = data
       let { userData } = data
