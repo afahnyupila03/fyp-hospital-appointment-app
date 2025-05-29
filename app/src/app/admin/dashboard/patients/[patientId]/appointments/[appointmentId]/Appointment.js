@@ -1,49 +1,78 @@
-"use client";
+'use client'
 
-import { usePatientAppointment } from "@/hooks/patient/usePatient";
+import { usePatientAppointment } from '@/hooks/patient/usePatient'
 
 export const Appointment = ({ id }) => {
-  const { data, isLoading, isError, error, refetch, isRefetchError } =
-    usePatientAppointment(id);
+  const { data, isLoading, isError, error } = usePatientAppointment(id)
 
-  if (isLoading) return <p>Loading appointment details</p>;
+  if (isLoading)
+    return (
+      <p className='text-center py-4 text-gray-500'>
+        Loading appointment details...
+      </p>
+    )
 
-  if (isError) return <p>Error loading appointment details, {error.message}</p>;
+  if (isError)
+    return (
+      <p className='text-center py-4 text-red-500'>
+        Error loading appointment details: {error.message}
+      </p>
+    )
 
-  console.log("appointment data: ", data);
-  const { doctorId, reason, notes, createdAt, status, timeSlot, date, _id } =
-    data;
-
-  const { name, email, specialization, department } = doctorId;
+  const { doctorId, reason, notes, createdAt, status, timeSlot, date } = data
+  const { name, email, specialization, department } = doctorId
 
   return (
-    <div>
-      <p>Appointment id(6806c3f778083fbbcb13ad1d): {id}</p>
-      <div>
-        <p>Doctor Information</p>
+    <div className='max-w-4xl mx-auto p-6 bg-white rounded-lg shadow space-y-6'>
+      <h2 className='text-2xl font-semibold text-gray-800'>
+        Appointment ID: <span className='text-blue-600'>{id}</span>
+      </h2>
 
-        <div>
-          <p>Doctor name: {name}</p>
-          <p>Doctor email: {email}</p>
-          <div>
-            <p>Specialty: {specialization}</p>
-            <p>Department: {department}</p>
-          </div>
+      <div className='border rounded-md p-4 bg-gray-50'>
+        <h3 className='text-xl font-semibold text-gray-700 mb-2'>
+          Doctor Information
+        </h3>
+        <p>
+          <span className='font-medium'>Name:</span> {name}
+        </p>
+        <p>
+          <span className='font-medium'>Email:</span> {email}
+        </p>
+        <div className='mt-2'>
+          <p>
+            <span className='font-medium'>Specialty:</span> {specialization}
+          </p>
+          <p>
+            <span className='font-medium'>Department:</span> {department}
+          </p>
         </div>
       </div>
-      <div>
-        <p>Appointment details</p>
-        <p>Reason: {reason}</p>
-        <p>Note: {notes}</p>
-        <p>Status: {status}</p>
-        <div>
-          <p>Day: {date}</p>
-          <p>Time: {timeSlot}</p>
-        </div>
+
+      <div className='border rounded-md p-4 bg-gray-50'>
+        <h3 className='text-xl font-semibold text-gray-700 mb-2'>
+          Appointment Details
+        </h3>
         <p>
-          Appointment created on : {new Date(createdAt).toLocaleDateString()}
+          <span className='font-medium'>Reason:</span> {reason}
+        </p>
+        <p>
+          <span className='font-medium'>Note:</span> {notes}
+        </p>
+        <p>
+          <span className='font-medium'>Status:</span> {status}
+        </p>
+        <div className='mt-2'>
+          <p>
+            <span className='font-medium'>Date:</span> {date}
+          </p>
+          <p>
+            <span className='font-medium'>Time:</span> {timeSlot}
+          </p>
+        </div>
+        <p className='mt-2 text-sm text-gray-600'>
+          Created on: {new Date(createdAt).toLocaleDateString()}
         </p>
       </div>
     </div>
-  );
-};
+  )
+}

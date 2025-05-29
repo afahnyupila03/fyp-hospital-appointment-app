@@ -1,9 +1,8 @@
-import { Field } from "formik";
-import React from "react";
+import { Field } from 'formik'
+import React from 'react'
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
-
-export default function CustomInput({
+export default function CustomInput ({
   id,
   name,
   label,
@@ -18,7 +17,7 @@ export default function CustomInput({
   togglePassword,
   showPassword,
   errors = {},
-  touched = {},
+  touched = {}
 }) {
   const inputProps = {
     id,
@@ -26,60 +25,67 @@ export default function CustomInput({
     onChange,
     onBlur,
     value,
-    className:
-      "block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6",
-    autoComplete: "off",
     placeholder,
-    errors,
-    touched,
-  };
+    autoComplete: 'off',
+    className:
+      'w-full border-none bg-transparent py-2 px-3 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-0'
+  }
+
+  const hasError = errors[name] && touched[name]
 
   return (
-    <div className="sm:col-span-4 relative">
+    <div className='sm:col-span-4 mb-4'>
       <label
         htmlFor={id}
-        className="block text-lg font-medium leading-6 text-gray-800"
+        className='block text-sm font-medium text-gray-700 mb-1'
       >
         {label}
       </label>
-      <div className="mt-2">
-        <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-800 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md relative">
-          {as === "select" ? (
-            <Field as="select" {...inputProps}>
-              {children}
-            </Field>
-          ) : as === "textarea" ? (
-            <Field as="textarea" {...inputProps} rows={row || 3} />
-          ) : (
-            <Field type={type} {...inputProps} />
-          )}
-          {name === "password" && value && (
-            <button
-              type="button"
-              onClick={togglePassword}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-lg leading-5"
-            >
-              {/* login */}
-              {showPassword ? (
-                <EyeSlashIcon
-                  onClick={togglePassword}
-                  className="h-6 w-6"
-                  aria-hidden="true"
-                />
-              ) : (
-                <EyeIcon
-                  onClick={togglePassword}
-                  className="h-6 w-6"
-                  aria-hidden="true"
-                />
-              )}
-            </button>
-          )}
-        </div>
-        {errors[name] && touched[name] && (
-          <p className="text-red-500">{errors[name]}</p>
+
+      <div
+        className={`flex items-center rounded-md border ${
+          hasError ? 'border-red-500' : 'border-gray-300'
+        } bg-white shadow-sm focus-within:ring-2 focus-within:ring-indigo-600 relative`}
+      >
+        {as === 'select' ? (
+          <Field
+            as='select'
+            {...inputProps}
+            className={`${inputProps.className} pr-10`}
+          >
+            {children}
+          </Field>
+        ) : as === 'textarea' ? (
+          <Field
+            as='textarea'
+            {...inputProps}
+            rows={row || 3}
+            className={`${inputProps.className} resize-none`}
+          />
+        ) : (
+          <Field
+            type={type === 'password' && showPassword ? 'text' : type}
+            {...inputProps}
+            className={`${inputProps.className} pr-10`}
+          />
+        )}
+
+        {name === 'password' && value && (
+          <button
+            type='button'
+            onClick={togglePassword}
+            className='absolute right-3 text-gray-500 hover:text-gray-700 focus:outline-none'
+          >
+            {showPassword ? (
+              <EyeSlashIcon className='h-5 w-5' />
+            ) : (
+              <EyeIcon className='h-5 w-5' />
+            )}
+          </button>
         )}
       </div>
+
+      {hasError && <p className='mt-1 text-sm text-red-600'>{errors[name]}</p>}
     </div>
-  );
+  )
 }

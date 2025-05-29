@@ -10,16 +10,16 @@ const styles = {
   },
   notificationCounter: {
     position: 'absolute',
-    top: '-8px',
+    top: '-6px',
     right: '-6px',
     color: 'white',
-    backgroundColor: '#1f2937', // same as Tailwind bg-gray-900
+    backgroundColor: '#ef4444', // red badge
     borderRadius: '9999px',
-    padding: '6px 10px',
-    fontSize: '12px',
+    padding: '2px 6px',
+    fontSize: '11px',
     fontWeight: 'bold',
     zIndex: 10,
-    minWidth: '20px',
+    minWidth: '18px',
     textAlign: 'center',
     lineHeight: '1'
   }
@@ -28,8 +28,8 @@ const styles = {
 const notificationType = type => {
   const types = {
     appointment_request: 'Appointment Request',
-    appointment_request_update: 'Appointment Requested Update',
-    appointment_status_update: 'Appointment Status Update.',
+    appointment_request_update: 'Appointment Request Update',
+    appointment_status_update: 'Appointment Status Update',
     general: 'General'
   }
 
@@ -37,30 +37,19 @@ const notificationType = type => {
 }
 
 const messageDate = createdAt => {
-  if (!createdAt) {
-    return 'No date'
-  }
+  if (!createdAt) return 'No date'
 
   const now = new Date()
   const created = new Date(createdAt)
-  const diffInSeconds = Math.floor((now - created) / 1000)
+  const seconds = Math.floor((now - created) / 1000)
 
-  if (diffInSeconds < 60) {
-    return `${diffInSeconds} second${diffInSeconds !== 1 ? 's' : ''} ago`
-  }
-
-  const diffInMinutes = Math.floor(diffInSeconds / 60)
-  if (diffInMinutes < 60) {
-    return `${diffInMinutes} minute${diffInMinutes !== 1 ? 's' : ''} ago`
-  }
-
-  const diffInHours = Math.floor(diffInMinutes / 60)
-  if (diffInHours < 24) {
-    return `${diffInHours} hour${diffInHours !== 1 ? 's' : ''} ago`
-  }
-
-  const diffInDays = Math.floor(diffInHours / 24)
-  return `${diffInDays} day${diffInDays !== 1 ? 's' : ''} ago`
+  if (seconds < 60) return `${seconds} second${seconds !== 1 ? 's' : ''} ago`
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`
+  const days = Math.floor(hours / 24)
+  return `${days} day${days !== 1 ? 's' : ''} ago`
 }
 
 export default function Notification ({
@@ -69,20 +58,17 @@ export default function Notification ({
   notificationHandler,
   deleteHandler
 }) {
-  const { user, loading } = AppState()
-
+  const { user } = AppState()
   const role = user?.role || '#'
 
   return (
     <Menu as='div' className='relative inline-block text-left'>
       <div
-        title={`${notificationCounter} unread message${
-          notificationCounter > 0 ? 's' : ''
-        }`}
+        title={`${notificationCounter} unread message${notificationCounter > 1 ? 's' : ''}`}
         style={styles.notificationWrapper}
       >
-        <MenuButton className='inline-flex justify-center items-center'>
-          <BellIcon aria-hidden='true' className='size-9 text-gray-400' />
+        <MenuButton className='inline-flex items-center justify-center rounded-full p-2 hover:bg-gray-200 transition'>
+          <BellIcon className='w-7 h-7 text-gray-600' aria-hidden='true' />
         </MenuButton>
         {notificationCounter > 0 && (
           <div style={styles.notificationCounter}>{notificationCounter}</div>
@@ -90,62 +76,61 @@ export default function Notification ({
       </div>
 
       <MenuItems
-        transition
-        className='absolute -right-24 
-        z-10 mt-2 w-56 origin-top-right 
-        rounded-md bg-white shadow-lg 
-        ring-1 ring-black/5 transition 
-        focus:outline-hidden 
-        data-closed:scale-95 
-        data-closed:transform 
-        data-closed:opacity-0 
-        data-enter:duration-100 
-        data-enter:ease-out 
-        data-leave:duration-75 
-        data-leave:ease-in'
+        className='absolute right-0 z-20 mt-2 w-80 max-h-96 overflow-y-auto origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none'
       >
         {notificationCounter > 0 ? (
           <>
-            <div className='py-1'>
+            <div className='divide-y divide-gray-200'>
               {notifications?.slice(0, 5).map(notification => (
                 <MenuItem key={notification._id}>
-                  <div className='block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden'>
-                    <div>
-                      <p>{notificationType(notification.type)}</p>
-                      <p>{messageDate(notification.createdAt)}</p>
-                    </div>
-                    <div className='flex py-1 justify-between items-center'>
-                      {notification.status === 'unread' ? (
+                  {({ active }) => (
+                    <div
+                      className={`px-4 py-3 text-sm ${
+                        active ? 'bg-gray-50' : ''
+                      }`}
+                    >
+                      <p className='font-semibold text-gray-800'>
+                        {notificationType(notification.type)}
+                      </p>
+                      <p className='text-xs text-gray-500'>
+                        {messageDate(notification.createdAt)}
+                      </p>
+                      <div className='flex items-center justify-between mt-2 gap-2'>
+                        {notification.status === 'unread' ? (
+                          <button
+                            className='text-blue-600 text-xs hover:underline'
+                            onClick={() => notificationHandler(notification._id)}
+                          >
+                            Mark as read
+                          </button>
+                        ) : (
+                          <span className='w-[80px]' />
+                        )}
+
                         <button
-                          className='cursor-pointer'
-                          onClick={() => notificationHandler(notification._id)}
+                          className='text-red-600 text-xs hover:underline'
+                          onClick={() => deleteHandler(notification._id)}
                         >
-                          Mark as read
+                          Delete
                         </button>
-                      ) : (
-                        <div className='w-[90px]'></div> // maintain space
-                      )}
-                      <button
-                        type='button'
-                        onClick={() => deleteHandler(notification._id)}
-                      >
-                        Delete
-                      </button>
-                      <Link
-                        href={`/${role}/dashboard/notifications/${notification._id}`}
-                      >
-                        View
-                      </Link>
+
+                        <Link
+                          href={`/${role}/dashboard/notifications/${notification._id}`}
+                          className='text-green-600 text-xs hover:underline'
+                        >
+                          View
+                        </Link>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </MenuItem>
               ))}
             </div>
 
-            <div className='py-1 pr-4 flex justify-end'>
+            <div className='p-3 border-t border-gray-200 text-right'>
               <Link
                 href={`/${role}/dashboard/notifications`}
-                className='pb-2 text-right text-grey-200'
+                className='text-sm text-blue-600 hover:underline'
               >
                 See all
               </Link>
@@ -153,14 +138,13 @@ export default function Notification ({
           </>
         ) : (
           <>
-            <div className='py-1'>
-              <p className='text-center'>No unread notifications</p>
+            <div className='p-4 text-center text-sm text-gray-500'>
+              No unread notifications
             </div>
-
-            <div className='py-1 pr-4 flex justify-end'>
+            <div className='p-3 border-t text-right'>
               <Link
                 href={`/${role}/dashboard/notifications`}
-                className='pb-2 text-right text-grey-200'
+                className='text-sm text-blue-600 hover:underline'
               >
                 See all
               </Link>
