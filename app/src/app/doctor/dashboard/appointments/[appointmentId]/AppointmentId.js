@@ -1,147 +1,138 @@
-"use client";
+'use client'
 
 import {
   useDoctorAppointment,
-  useUpdateDoctorAppointment,
-} from "@/hooks/doctor/useDoctor";
-import { Formik, Form } from "formik";
-
-import CustomInput from "@/components/CustomInput";
+  useUpdateDoctorAppointment
+} from '@/hooks/doctor/useDoctor'
+import { Formik, Form } from 'formik'
+import CustomInput from '@/components/CustomInput'
 
 export const AppointmentId = ({ id }) => {
-  const { data, isLoading, isError, error, refetch } = useDoctorAppointment(id);
+  const { data, isLoading, isError, error, refetch } = useDoctorAppointment(id)
+  const { mutateAsync: updateAppointment } = useUpdateDoctorAppointment()
 
-  const { mutateAsync: updateAppointment } = useUpdateDoctorAppointment();
+  if (isLoading) return <p>Loading appointment details...</p>
+  if (isError) return <p>{`${error.message} - ${error.name}`}</p>
 
-  if (isLoading) return <p>Loading appointment details</p>;
-  if (isError) return <p>{`${error.message} - ${error.name}`}</p>;
+  const { date, timeSlot, notes, reason, status, patientId } = data
+  const { name, email } = patientId
 
-  const {
-    date,
-    timeSlot,
-    notes,
-    reason,
-    status,
-    patientId: { _id, email, name },
-  } = data;
-
-  const updateActions = (status) => {
-    switch (status) {
-      case "pending":
-        return [
-          { key: "confirmed", label: "Confirm" },
-          { key: "canceled", label: "Cancel" },
-        ];
-      case "confirmed":
-        return [
-          { key: "completed", label: "Complete" },
-          { key: "canceled", label: "Cancel" },
-        ];
-      default:
-        return [];
+  const updateActions = status => {
+    const actions = {
+      pending: [
+        { actionKey: 'confirmed', label: 'Confirm' },
+        { actionKey: 'canceled', label: 'Cancel' }
+      ],
+      confirmed: [
+        { actionKey: 'completed', label: 'Complete' },
+        { actionKey: 'canceled', label: 'Cancel' }
+      ]
     }
-  };
+    return actions[status] || []
+  }
 
-  const completeHandler = async (data) => {
+  const handleStatusChange = async newStatus => {
+    if (newStatus === status) return
+
+    const handlers = {
+      completed: completeHandler,
+      confirmed: confirmHandler,
+      canceled: cancelHandler
+    }
+
+    if (handlers[newStatus]) {
+      await handlers[newStatus]()
+    }
+  }
+
+  const completeHandler = async () => {
     try {
-      await updateAppointment({
-        id,
-        status: "completed",
-      });
-      console.log("success updating appointment: [completed]");
-      refetch();
+      await updateAppointment({ id, status: 'completed' })
+      refetch()
     } catch (error) {
-      console.error("error updating appointment to completed: ", error);
-      throw error;
+      console.error('Failed to complete appointment:', error)
     }
-  };
-  const confirmHandler = async (data) => {
+  }
+
+  const confirmHandler = async () => {
     try {
-      await updateAppointment({
-        id,
-        status: "confirmed",
-      });
-      console.log("success updating appointment: [confirmed]");
-      refetch();
+      await updateAppointment({ id, status: 'confirmed' })
+      refetch()
     } catch (error) {
-      console.error("error updating appointment to confirmed: ", error);
-      throw error;
+      console.error('Failed to confirm appointment:', error)
     }
-  };
-  const cancelHandler = async (data) => {
+  }
+
+  const cancelHandler = async () => {
     try {
-      await updateAppointment({
-        id,
-        status: "canceled",
-      });
-      console.log("success updating appointment: [canceled]");
-      refetch();
+      await updateAppointment({ id, status: 'canceled' })
+      refetch()
     } catch (error) {
-      console.error("error updating appointment to canceled: ", error);
-      throw error;
+      console.error('Failed to cancel appointment:', error)
     }
-  };
+  }
 
   return (
-    <div>
-      <p>p-name: {name}</p>
-      <p>p-email: {email}</p>
-      <div>
-        <h3>Appointment details</h3>
-        <p>Day - Time: {`${date} - ${timeSlot}`}</p>
-        <p>Reason: {reason}</p>
-        <p>Note: {notes}</p>
-        <div>
-          <Formik initialValues={status} onSubmit={() => {}}>
-            {({ handleBlur }) => (
-              <Form>
-                <CustomInput
-                  as={
-                    status === "canceled" || status === "completed"
-                      ? ""
-                      : "select"
-                  }
-                  label="Status"
-                  placeholder={
-                    (status !== "canceled" || status !== "completed") && status
-                  }
-                  readOnly={!!(status === "canceled" || status === "completed")}
-                  id="status"
-                  name="status"
-                  onChange={async (e) => {
-                    const newStatus = e.target.value;
-                    console.log("new status: ", newStatus);
+    <div className='max-w-3xl mx-auto px-4 py-6 space-y-6'>
+      <div className='bg-white shadow-md rounded-lg p-4'>
+        <h2 className='text-xl font-semibold text-gray-800 mb-2'>
+          Patient Contact
+        </h2>
+        <p className='text-gray-600'>
+          <span className='font-medium'>Name:</span> {name}
+        </p>
+        <p className='text-gray-600'>
+          <span className='font-medium'>Email:</span> {email}
+        </p>
+      </div>
 
-                    if (newStatus == status) return; // Perform no action is old status equals new status.
+      <div className='bg-white shadow-md rounded-lg p-4'>
+        <h3 className='text-lg font-semibold text-gray-800 mb-2'>
+          Appointment Details
+        </h3>
+        <p className='text-gray-600 mb-1'>
+          <span className='font-medium'>Day - Time:</span>{' '}
+          {`${date} - ${timeSlot}`}
+        </p>
+        <p className='text-gray-600 mb-1'>
+          <span className='font-medium'>Reason:</span> {reason}
+        </p>
+        <p className='text-gray-600 mb-4'>
+          <span className='font-medium'>Note:</span> {notes}
+        </p>
 
-                    switch (newStatus) {
-                      case "completed":
-                        await completeHandler();
-                        break;
-                      case "confirmed":
-                        await confirmHandler();
-                        break;
-                      case "canceled":
-                        await cancelHandler();
-                        break;
-                      default:
-                        break;
-                    }
-                  }}
-                  onBlur={handleBlur}
-                >
-                  <option value={status}>{status}</option>
-                  {updateActions(status).map((action, index) => (
-                    <option type="onSubmit" value={action.key} key={action.key}>
-                      {action.label}
-                    </option>
-                  ))}
-                </CustomInput>
-              </Form>
-            )}
-          </Formik>
-        </div>
+        <Formik initialValues={{ status }} onSubmit={() => {}}>
+          {({ handleBlur }) => (
+            <Form>
+              <CustomInput
+                as={
+                  status === 'canceled' || status === 'completed'
+                    ? 'input'
+                    : 'select'
+                }
+                label='Status'
+                placeholder={status}
+                readOnly={status === 'canceled' || status === 'completed'}
+                id='status'
+                name='status'
+                onChange={async e => await handleStatusChange(e.target.value)}
+                onBlur={handleBlur}
+              >
+                {status !== 'canceled' && status !== 'completed' && (
+                  <>
+                    <option value={status}>{status}</option>
+                    {updateActions(status).map(action => (
+                      <option value={action.actionKey} key={action.actionKey}>
+                        {action.label}
+                      </option>
+                    ))}
+                  </>
+                )}
+              </CustomInput>
+            </Form>
+          )}
+        </Formik>
       </div>
     </div>
-  );
-};
+  )
+}

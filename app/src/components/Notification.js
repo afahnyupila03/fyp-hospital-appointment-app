@@ -1,3 +1,5 @@
+'use client'
+
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { BellIcon } from '@heroicons/react/20/solid'
 import Link from 'next/link'
@@ -64,7 +66,9 @@ export default function Notification ({
   return (
     <Menu as='div' className='relative inline-block text-left'>
       <div
-        title={`${notificationCounter} unread message${notificationCounter > 1 ? 's' : ''}`}
+        title={`${notificationCounter} unread message${
+          notificationCounter > 1 ? 's' : ''
+        }`}
         style={styles.notificationWrapper}
       >
         <MenuButton className='inline-flex items-center justify-center rounded-full p-2 hover:bg-gray-200 transition'>
@@ -75,9 +79,11 @@ export default function Notification ({
         )}
       </div>
 
+      {/* 🔁 Dropdown modified to open upward */}
       <MenuItems
-        className='absolute right-0 z-20 mt-2 w-80 max-h-96 overflow-y-auto origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none'
-      >
+  className="absolute left-0 bottom-12 w-80 max-h-96 overflow-y-auto origin-bottom-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none z-50"
+>
+
         {notificationCounter > 0 ? (
           <>
             <div className='divide-y divide-gray-200'>
@@ -99,7 +105,9 @@ export default function Notification ({
                         {notification.status === 'unread' ? (
                           <button
                             className='text-blue-600 text-xs hover:underline'
-                            onClick={() => notificationHandler(notification._id)}
+                            onClick={() =>
+                              notificationHandler(notification._id)
+                            }
                           >
                             Mark as read
                           </button>
