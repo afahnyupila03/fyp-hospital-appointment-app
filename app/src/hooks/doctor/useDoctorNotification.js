@@ -26,11 +26,11 @@ export const useDoctorNotifications = (page, limit, isDoctor) => {
   })
 }
 
-export const useDoctorNotification = (id, isDoctor) => {
+export const useDoctorNotification = (id, ) => {
   return useQuery({
-    queryKey: ['notification', id, isDoctor],
+    queryKey: ['notification', id],
     queryFn: () => viewDoctorNotification(id),
-    enabled: !!id && !!isDoctor
+    enabled: !!id 
   })
 }
 

@@ -1,211 +1,166 @@
-"use client";
-import Dropdown from "@/components/Dropdown";
-import { useDoctorAppointments } from "@/hooks/doctor/useDoctor";
-import React, { useState } from "react";
+'use client'
 
-function AppointmentsPage() {
-  const [page, setPage] = useState(1);
-  const limit = 15;
+import Dropdown from '@/components/Dropdown'
+import Table from '@/components/Table'
+import {
+  useDoctorAppointments,
+  useUpdateDoctorAppointment
+} from '@/hooks/doctor/useDoctor'
+import React, { useState } from 'react'
+
+const appointmentActions = appointment => {
+  const id = appointment._id
+  const status = appointment.status
+  const viewAction = {
+    id,
+    type: 'link',
+    label: 'View',
+    link: `appointments/${id}`
+  }
+
+  const actions = {
+    pending: [
+      { id, type: 'button', label: 'Confirm', actionKey: 'confirm' },
+      { id, type: 'button', label: 'Cancel', actionKey: 'cancel' },
+      viewAction
+    ],
+    confirmed: [
+      { id, type: 'button', label: 'Complete', actionKey: 'complete' },
+      { id, type: 'button', label: 'Cancel', actionKey: 'cancel' },
+      viewAction
+    ]
+  }
+
+  return actions[status] || [viewAction]
+}
+
+const statusColors = {
+  pending: '#facc15', // yellow
+  confirmed: '#22c55e', // green
+  completed: '#3b82f6', // blue
+  canceled: '#ef4444' // red
+}
+
+function AppointmentsPage () {
+  const [page, setPage] = useState(1)
+  const limit = 15
 
   const { data, isLoading, isFetching, isError, error } = useDoctorAppointments(
     page,
     limit
-  );
+  )
 
-  if (isLoading || isFetching) return <p>Loading appointments</p>;
-  if (isError) return <p>{error}</p>;
+  const { mutateAsync: updateAppointment } = useUpdateDoctorAppointment()
 
-  const isFirstPage = page === 1;
-  const isLastPage = page === data.totalPages;
+  if (isLoading) {
+    return (
+      <div className='flex justify-center items-center h-40 text-gray-500'>
+        Loading appointments...
+      </div>
+    )
+  }
 
-  const appointmentActions = (appointment) => {
-    switch (appointment.status) {
-      case "pending":
-        return [
-          {
-            id: appointment._id,
-            type: "button",
-            label: "Confirm",
-          },
-          {
-            id: appointment._id,
-            type: "button",
-            label: "Cancel",
-          },
-          {
-            id: appointment._id,
-            type: "link",
-            label: "View",
-            link: `/doctor/dashboard/appointments/${appointment._id}`,
-          },
-        ];
-      case "confirmed":
-        return [
-          {
-            id: appointment._id,
-            type: "button",
-            label: "Complete",
-          },
-          {
-            id: appointment._id,
-            type: "button",
-            label: "Cancel",
-          },
-          {
-            id: appointment._id,
-            type: "link",
-            label: "View",
-            link: `/doctor/dashboard/appointments/${appointment._id}`,
-          },
-        ];
-      case "completed":
-      case "canceled":
-        return [
-          {
-            id: appointment._id,
-            type: "link",
-            label: "View",
-            link: `/doctor/dashboard/appointments/${appointment._id}`,
-          },
-        ];
-      default:
-        return [];
-    }
-  };
+  if (isError) {
+    return (
+      <div className='text-red-500 text-center py-10'>
+        {error?.message || 'An error occurred while fetching appointments.'}
+      </div>
+    )
+  }
 
-  const confirmHandler = async (id) => {
+  const isFirstPage = page === 1
+  const isLastPage = page === data.totalPages
+  const currentPage = data.currentPage
+  const totalPages = data.totalPages
+  const count = data.count
+
+  const updateStatus = async (id, status) => {
     try {
-      await updateAppointment({
-        id,
-        status: "confirmed",
-      });
-      console.log("appointment status updated...[confirmed]");
+      await updateAppointment({ id, status })
+      console.log(`Appointment status updated... [${status}]`)
     } catch (error) {
-      console.error("error updating appointment to confirmed: ", error);
+      console.error(`Error updating appointment to ${status}: `, error)
     }
-  };
-  const completedHandler = async (id) => {
-    try {
-      await updateAppointment({
-        id,
-        status: "completed",
-      });
-      console.log("appointment status updated...[completed]");
-    } catch (error) {
-      console.error("error updating appointment to completed: ", error);
-    }
-  };
-  const cancelHandler = async (id) => {
-    try {
-      await updateAppointment({
-        id,
-        status: "canceled",
-      });
-      console.log("appointment status updated...[canceled]");
-    } catch (error) {
-      console.error("error updating appointment canceled: ", error);
-    }
-  };
+  }
+
+  const tableHeaders = (
+    <>
+      <th className='py-3 px-4 text-left bg-gray-200'>S/N</th>
+      <th className='py-3 px-4 text-left bg-gray-200'>Name</th>
+      <th className='py-3 px-4 text-left bg-gray-200'>Email</th>
+      <th className='py-3 px-4 text-left bg-gray-200'>Reason</th>
+      <th className='py-3 px-4 text-left bg-gray-200'>Note</th>
+      <th className='py-3 px-4 text-left bg-gray-200'>Status</th>
+      <th className='py-3 px-4 text-left bg-gray-200'>Actions</th>
+    </>
+  )
+
+  const tableData =
+    count === 0 ? (
+      <tr>
+        <td colSpan={7} className='text-center py-10 text-gray-500'>
+          No appointments found at the moment.
+        </td>
+      </tr>
+    ) : (
+      data.appointments?.map((appointment, index) => (
+        <tr
+          key={appointment._id}
+          className='text-sm'
+          style={{
+            backgroundColor:
+              statusColors[appointment.status?.toLowerCase()] || '#f1f5f9'
+          }}
+        >
+          <td className='py-3 px-4'>{index + 1}</td>
+          <td
+            className='py-3 px-4 truncate max-w-[150px]'
+            title={appointment.patientId?.name}
+          >
+            {appointment.patientId?.name || 'N/A'}
+          </td>
+          <td className='py-3 px-4'>{appointment.patientId?.email || 'N/A'}</td>
+          <td className='py-3 px-4'>{appointment.reason || 'N/A'}</td>
+          <td
+            className='py-3 px-4 truncate max-w-[150px]'
+            title={appointment.notes}
+          >
+            {appointment.notes || 'N/A'}
+          </td>
+          <td className='py-3 px-4 capitalize'>{appointment.status}</td>
+          <td className='py-3 px-4'>
+            <Dropdown
+              actions={appointmentActions(appointment)}
+              actionHandler={actionKey => {
+                actionKey === 'confirm'
+                  ? updateStatus(appointment._id, 'confirmed')
+                  : actionKey === 'complete'
+                  ? updateStatus(appointment._id, 'completed')
+                  : actionKey === 'cancel' &&
+                    updateStatus(appointment._id, 'canceled')
+              }}
+            />
+          </td>
+        </tr>
+      ))
+    )
 
   return (
-    <div>
-      <table className="w-full border-collapse mt-20">
-        <thead>
-          <tr className="text-left bg-gray-200">
-            <th className="py-4 px-6" style={{ width: "2%" }}>
-              S/N
-            </th>
-            <th className="py-4 px-6" style={{ width: "12%" }}>
-              Name
-            </th>
-            <th className="py-4 px-6" style={{ width: "12%" }}>
-              Email
-            </th>
-            <th className="py-4 px-6" style={{ width: "6%" }}>
-              Reason
-            </th>
-            <th className="py-4 px-6" style={{ width: "15%" }}>
-              Note
-            </th>
-            <th className="py-4 px-6" style={{ width: "4%" }}>
-              Status
-            </th>
-            <th className="py-4 px-6" style={{ width: "1%" }}>
-              {/* actions tab. */}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {data?.appointments?.map((appointment, index) => (
-            <tr
-              key={appointment._id}
-              className="bg-gray-100"
-              // style={{
-              //   backgroundColor:
-              //     statusColors[appointment.status?.toLowerCase()] || "#f1f5f9",
-              // }}
-            >
-              <td className="py-4 px-6 truncate max-w-[150px]">{index + 1}</td>
-              <td
-                className="py-4 px-6 truncate max-w-[150px]"
-                title={appointment.patientId.name}
-              >
-                {appointment.patientId.name}
-              </td>
-              <td className="py-4 px-6">{appointment.patientId.email}</td>
-              <td className="py-4 px-6">{appointment.reason}</td>
-              <td
-                className="py-4 px-6 truncate max-w-[150px]"
-                title={appointment.notes}
-              >
-                {appointment.notes}
-              </td>
-              <td className="py-4 px-6">{appointment.status}</td>
-              <td className="py-4 px-6" title="appointment actions">
-                <Dropdown
-                  actions={appointmentActions(appointment)}
-                  actionHandler={(actionLabel) => {
-                    if (actionLabel === "confirm") {
-                      confirmHandler(appointment._id);
-                    } else if (actionLabel === "complete") {
-                      completedHandler(appointment._id);
-                    } else {
-                      cancelHandler(appointment._id);
-                    }
-                  }}
-                />
-              </td>
-            </tr>
-          ))}
-
-          <tr>
-            <td colSpan={6} className="py-6 px-6 text-right">
-              <button
-                onClick={() => setPage((p) => Math.max(p - 1, 1))}
-                disabled={isFirstPage}
-                className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <span className="mx-4">
-                {data?.currentPage} of {data?.totalPages}
-              </span>
-              <button
-                onClick={() =>
-                  setPage((p) => (p < data?.totalPages ? p + 1 : p))
-                }
-                disabled={isLastPage}
-                className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
-              >
-                Next
-              </button>
-              {isFetching && <span className="ml-4">Loading...</span>}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div className='p-4 bg-white rounded shadow'>
+      <h2 className='text-2xl font-semibold mb-4'>Appointments</h2>
+      <Table
+        isFetching={isFetching}
+        isFirstPage={isFirstPage}
+        isLastPage={isLastPage}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        tableHeaders={tableHeaders}
+        tableData={tableData}
+        nextPageHandler={() => setPage(p => (p < totalPages ? p + 1 : p))}
+        prevPageHandler={() => setPage(p => Math.max(p - 1, 1))}
+      />
     </div>
-  );
+  )
 }
 
-export default AppointmentsPage;
+export default AppointmentsPage

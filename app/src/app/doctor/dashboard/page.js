@@ -34,63 +34,31 @@ const getStatusCounts = appointments => {
 
   return counts
 }
+
 const appointmentActions = appointment => {
-  switch (appointment.status) {
-    case 'pending':
-      return [
-        {
-          id: appointment._id,
-          type: 'button',
-          label: 'Confirm',
-          actionKey: 'confirm'
-        },
-        {
-          id: appointment._id,
-          type: 'button',
-          label: 'Cancel',
-          actionKey: 'cancel'
-        },
-        {
-          id: appointment._id,
-          type: 'link',
-          label: 'View',
-          link: `/doctor/dashboard/appointments/${appointment._id}`
-        }
-      ]
-    case 'confirmed':
-      return [
-        {
-          id: appointment._id,
-          type: 'button',
-          label: 'Complete',
-          actionKey: 'complete'
-        },
-        {
-          id: appointment._id,
-          type: 'button',
-          label: 'Cancel',
-          actionKey: 'cancel'
-        },
-        {
-          id: appointment._id,
-          type: 'link',
-          label: 'View',
-          link: `/doctor/dashboard/appointments/${appointment._id}`
-        }
-      ]
-    case 'completed':
-    case 'canceled':
-      return [
-        {
-          id: appointment._id,
-          type: 'link',
-          label: 'View',
-          link: `/doctor/dashboard/appointments/${appointment._id}`
-        }
-      ]
-    default:
-      return []
+  const id = appointment._id
+  const status = appointment.status
+  const viewAction = {
+    id,
+    type: 'link',
+    label: 'View',
+    link: `appointments/${id}`
   }
+
+  const actions = {
+    pending: [
+      { id, type: 'button', label: 'Confirm', actionKey: 'confirm' },
+      { id, type: 'button', label: 'Cancel', actionKey: 'cancel' },
+      viewAction
+    ],
+    confirmed: [
+      { id, type: 'button', label: 'Complete', actionKey: 'complete' },
+      { id, type: 'button', label: 'Cancel', actionKey: 'cancel' },
+      viewAction
+    ]
+  }
+
+  return actions[status] || [viewAction]
 }
 
 const statusColors = {
@@ -102,9 +70,7 @@ const statusColors = {
 
 export default function DoctorDashboardPage () {
   const { user } = AppState()
-
   const [docAppointments, setDocAppointments] = useState(null)
-
   const [page, setPage] = useState(1)
   const limit = 10
 
@@ -117,18 +83,13 @@ export default function DoctorDashboardPage () {
   const { mutateAsync: notificationRequest } = useDoctorNotificationPermission()
 
   useEffect(() => {
-    // If no user, do nothing.
     if (!user) return
-
-    // If permission exist in backend, skip.
     if (user.notificationPermission) return
 
-    // Only prompt the browser if it hasn't been granted/denied yet.
     if (Notification.permission === 'default') {
       Notification.requestPermission().then(async result => {
         const granted = result === 'granted'
         try {
-          // persist granted result.
           await notificationRequest({ granted })
           user.notificationPermission = granted
         } catch (err) {
@@ -136,7 +97,6 @@ export default function DoctorDashboardPage () {
         }
       })
     } else {
-      // Browser already has a verdict (granted/denied) but backend hasn't recorded it:
       const granted = Notification.permission === 'granted'
       notificationRequest({ granted }).catch(err =>
         console.error('Failed to sync existing permission:', err)
@@ -146,8 +106,8 @@ export default function DoctorDashboardPage () {
 
   useEffect(() => {
     if (data?.appointments) {
-      const statusCounts = getStatusCounts(data?.appointments)
-      const chartData = {
+      const statusCounts = getStatusCounts(data.appointments)
+      setDocAppointments({
         labels: ['Pending', 'Confirmed', 'Completed', 'Canceled'],
         datasets: [
           {
@@ -162,158 +122,165 @@ export default function DoctorDashboardPage () {
             borderRadius: 4
           }
         ]
-      }
-
-      setDocAppointments(chartData)
+      })
     }
   }, [data])
 
-  if (isLoading || !user) return <p>Loading appointments</p>
-  if (isError) return <p>{error.message}</p>
+  if (isLoading || !user) {
+    return (
+      <div className='flex justify-center items-center min-h-screen text-gray-600 text-lg'>
+        Loading appointments...
+      </div>
+    )
+  }
 
-  const isFirstPage = page === 1
-  const isLastPage = page === data.totalPages
-  const currentPage = data?.currentPage
-  const totalPages = data?.totalPages
+  if (isError) {
+    return (
+      <div className='flex justify-center items-center min-h-screen text-red-500 text-lg'>
+        Error:
+        {error?.message || 'Something went wrong while fetching appointments.'}
+      </div>
+    )
+  }
 
   const confirmHandler = async id => {
     try {
-      console.log('Performing [confirm] action')
-      await updateAppointment({
-        id,
-        status: 'confirmed'
-      })
-      console.log('appointment status updated...[confirmed]')
+      await updateAppointment({ id, status: 'confirmed' })
     } catch (error) {
-      console.error('error updating appointment to confirmed: ', error)
+      console.error('Error confirming appointment:', error)
     }
   }
 
   const completedHandler = async id => {
     try {
-      console.log('Performing [complete] action')
-      await updateAppointment({
-        id,
-        status: 'completed'
-      })
-      console.log('appointment status updated...[completed]')
+      await updateAppointment({ id, status: 'completed' })
     } catch (error) {
-      console.error('error updating appointment to completed: ', error)
+      console.error('Error completing appointment:', error)
     }
   }
 
   const cancelHandler = async id => {
     try {
-      console.log('Performing [cancel] action')
-      await updateAppointment({
-        id,
-        status: 'canceled'
-      })
-      console.log('appointment status updated...[canceled]')
+      await updateAppointment({ id, status: 'canceled' })
     } catch (error) {
-      console.error('error updating appointment canceled: ', error)
+      console.error('Error cancelling appointment:', error)
     }
   }
 
   const tableHeaders = (
     <>
-      <th className='py-4 px-6'>S/N</th>
-      <th className='py-4 px-6'>Name</th>
-      <th className='py-4 px-6'>Email</th>
-      <th className='py-4 px-6'>Reason</th>
-      <th className='py-4 px-6'>Note</th>
-      <th className='py-4 px-6'>Status</th>
-      <th className='py-4 px-6'></th>
+      <th className='py-4 px-6 text-left'>S/N</th>
+      <th className='py-4 px-6 text-left'>Name</th>
+      <th className='py-4 px-6 text-left'>Email</th>
+      <th className='py-4 px-6 text-left'>Reason</th>
+      <th className='py-4 px-6 text-left'>Note</th>
+      <th className='py-4 px-6 text-left'>Status</th>
+      <th className='py-4 px-6 text-left'></th>
     </>
   )
 
-  const tableData = data?.appointments?.map((appointment, index) => (
-    <tr
-      key={appointment._id}
-      className='bg-gray-100'
-      style={{
-        backgroundColor:
-          statusColors[appointment.status?.toLowerCase()] || '#f1f5f9'
-      }}
-    >
-      <td className='py-4 px-6 truncate max-w-[150px]'>{index + 1}</td>
-      <td
-        className='py-4 px-6 truncate max-w-[150px]'
-        title={appointment.patientId.name}
-      >
-        {appointment.patientId.name}
-      </td>
-      <td className='py-4 px-6'>{appointment.patientId.email}</td>
-      <td className='py-4 px-6'>{appointment.reason}</td>
-      <td
-        className='py-4 px-6 truncate max-w-[150px]'
-        title={appointment.notes}
-      >
-        {appointment.notes}
-      </td>
-      <td className='py-4 px-6'>{appointment.status}</td>
-      <td className='py-4 px-6'>
-        <Dropdown
-          actions={appointmentActions(appointment)}
-          actionHandler={action => {
-            if (action.actionKey === 'confirm') {
-              confirmHandler(appointment._id)
-            } else if (action.actionKey === 'complete') {
-              completedHandler(appointment._id)
-            } else if (action.actionKey === 'cancel') {
-              cancelHandler(appointment._id)
-            }
+  const tableData =
+    data?.count === 0 ? (
+      <tr>
+        <td colSpan={7} className='text-center py-10 text-gray-500'>
+          No appointments found at the moment.
+        </td>
+      </tr>
+    ) : (
+      data?.appointments?.map((appointment, index) => (
+        <tr
+          key={appointment._id}
+          className='text-sm'
+          style={{
+            backgroundColor:
+              statusColors[appointment.status?.toLowerCase()] || '#f1f5f9'
           }}
-        />
-      </td>
-    </tr>
-  ))
+        >
+          <td className='py-4 px-6'>{(page - 1) * limit + index + 1}</td>
+          <td
+            className='py-4 px-6 truncate max-w-[150px]'
+            title={appointment.patientId.name}
+          >
+            {appointment.patientId.name}
+          </td>
+          <td className='py-4 px-6'>{appointment.patientId.email}</td>
+          <td className='py-4 px-6'>{appointment.reason}</td>
+          <td
+            className='py-4 px-6 truncate max-w-[150px]'
+            title={appointment.notes}
+          >
+            {appointment.notes}
+          </td>
+          <td className='py-4 px-6 capitalize'>{appointment.status}</td>
+          <td className='py-4 px-6'>
+            <Dropdown
+              actions={appointmentActions(appointment)}
+              actionHandler={action => {
+                if (action.actionKey === 'confirm') {
+                  confirmHandler(appointment._id)
+                } else if (action.actionKey === 'complete') {
+                  completedHandler(appointment._id)
+                } else if (action.actionKey === 'cancel') {
+                  cancelHandler(appointment._id)
+                }
+              }}
+            />
+          </td>
+        </tr>
+      ))
+    )
 
   return (
-    <div>
-      <div className='flex justify-between items-center'>
-        <div>
-          <h1>Welcome to CareConnect</h1>
-          <p>CareConnect {user?.role} dashboard</p>
+    <div className='px-4 md:px-12 py-8 space-y-12'>
+      <div className='flex justify-between items-center border-b pb-4 w-full'>
+        <div className='flex-1'>
+          <h1 className='text-2xl font-bold text-gray-800'>
+            Welcome to CareConnect
+          </h1>
+          <p className='text-sm text-gray-500 mt-1 capitalize'>
+            {user?.role} dashboard
+          </p>
         </div>
-
-        <div>
+        <div className='shrink-0'>
           <UserCard name={user?.name} role={user?.role} />
         </div>
       </div>
 
       {docAppointments?.datasets?.[0]?.data?.every(count => count === 0) ? (
-        <p className='mt-10 text-center text-gray-500'>
+        <p className='text-center text-gray-400 text-md mt-10'>
           No appointment data to display in charts.
         </p>
       ) : (
-        <>
-          <DoughnutChart
-            chartData={docAppointments}
-            text='Appointment Status Breakdown'
-          />
-          <div className='my-6' />
-          <BarChart
-            chartData={docAppointments}
-            text='Appointment Status Breakdown'
-          />
-        </>
+        <div className='flex flex-col md:flex-row gap-6'>
+          <div className='w-full md:w-1/2'>
+            <DoughnutChart
+              chartData={docAppointments}
+              text='Appointment Status Breakdown'
+            />
+          </div>
+          <div className='w-full md:w-1/2'>
+            <BarChart
+              chartData={docAppointments}
+              text='Appointment Status Breakdown'
+            />
+          </div>
+        </div>
       )}
 
-      <div className='mt-20'>
-        {data?.appointments?.length === 0 ? (
-          <div className='text-center py-10 text-gray-500'>
-            <p>No appointments found at the moment.</p>
+      <div className='mt-16'>
+        {data?.count === 0 ? (
+          <div className='text-center py-10 text-gray-400 text-md'>
+            No appointments found at the moment.
           </div>
         ) : (
           <Table
             tableHeaders={tableHeaders}
             tableData={tableData}
-            currentPage={currentPage}
-            totalPages={totalPages}
+            currentPage={data?.currentPage}
+            totalPages={data?.totalPages}
             isFetching={isFetching}
-            isFirstPage={isFirstPage}
-            isLastPage={isLastPage}
+            isFirstPage={page === 1}
+            isLastPage={page === data?.totalPages}
             nextPageHandler={() =>
               setPage(p => (p < data?.totalPages ? p + 1 : p))
             }

@@ -56,11 +56,9 @@ export const viewDoctorNotification = async id => {
 
   const data = await res.json()
 
-  if (!res.ok) throw new Error(data.message || (data.error && data.message))
+  if (!res.ok) throw new Error(data.error || data.message)
 
-  const { notification } = data
-
-  return notification
+  return data.notification
 }
 
 export const updateDoctorNotificationStatus = async (id, status) => {
@@ -95,5 +93,5 @@ export const deleteDoctorNotification = async id => {
 
   if (!res.ok) throw new Error(data.message)
 
-    return data;
+  return data
 }
