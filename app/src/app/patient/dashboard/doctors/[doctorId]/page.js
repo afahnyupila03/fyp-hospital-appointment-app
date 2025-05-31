@@ -1,7 +1,7 @@
 import DoctorId from './DoctorId'
 
 export default async function DoctorPage ({ params }) {
-  const { doctorId } = params
+  const { doctorId } = await params
 
   return (
     <div className='p-6 min-h-screen bg-gray-50'>
