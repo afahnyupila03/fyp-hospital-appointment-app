@@ -22,7 +22,6 @@ export default function DoctorId ({ id }) {
     'Sunday'
   ]
 
-  // Define 2-hour intervals
   const timeIntervals = Array.from({ length: 12 }, (_, i) => {
     const startHour = i * 2
     const endHour = startHour + 2
@@ -37,8 +36,6 @@ export default function DoctorId ({ id }) {
 
   useEffect(() => {
     if (data) {
-      console.log('doctor time: ', data)
-      // Helper function to convert time strings to minutes
       const timeStringToMinutes = timeStr => {
         const [time, modifier] = timeStr.trim().split(' ')
         let [hours, minutes] = time.split(':').map(Number)
@@ -47,13 +44,11 @@ export default function DoctorId ({ id }) {
         return hours * 60 + minutes
       }
 
-      // Helper function to parse interval strings into start and end minutes
       const parseInterval = intervalStr => {
         const [startStr, endStr] = intervalStr.split(' - ')
         return [timeStringToMinutes(startStr), timeStringToMinutes(endStr)]
       }
 
-      // Create a lookup for quick access
       const scheduleLookup = {}
 
       data.schedules.forEach(({ day, time }) => {
@@ -61,36 +56,31 @@ export default function DoctorId ({ id }) {
           scheduleLookup[day] = new Set()
         }
 
-        // Parse the doctor's scheduled time
         const [scheduleStart, scheduleEnd] = parseInterval(time)
 
-        // Check each 2-hour interval for overlap
         timeIntervals.forEach(interval => {
           const [intervalStart, intervalEnd] = parseInterval(interval)
-
-          // Check for any overlap
           if (scheduleStart < intervalEnd && scheduleEnd > intervalStart) {
             scheduleLookup[day].add(interval)
           }
         })
       })
 
-      // Generate table rows with days as rows and time intervals as columns
       const rows = daysOfWeek.map((day, idx) => (
         <tr key={idx}>
-          <td className='font-semibold'>{day}</td>
+          <td className='border border-gray-300 px-3 py-2 font-medium text-gray-800'>
+            {day}
+          </td>
           {timeIntervals.map((interval, i) => (
             <td
               key={i}
-              className={
-                scheduleLookup[day] && scheduleLookup[day].has(interval)
-                  ? 'bg-green-300 text-center'
-                  : 'text-center'
-              }
+              className={`border border-gray-300 px-3 py-2 text-center ${
+                scheduleLookup[day]?.has(interval)
+                  ? 'bg-green-100 text-green-800 font-semibold'
+                  : 'text-gray-500'
+              }`}
             >
-              {scheduleLookup[day] && scheduleLookup[day].has(interval)
-                ? 'Available'
-                : ''}
+              {scheduleLookup[day]?.has(interval) ? 'Available' : ''}
             </td>
           ))}
         </tr>
@@ -100,51 +90,85 @@ export default function DoctorId ({ id }) {
     }
   }, [data])
 
-  if (isLoading) return <p>Loading...</p>
-  if (isError) return <p>{error}</p>
+  if (isLoading) return <p className='text-gray-600 p-4'>Loading...</p>
+  if (isError) return <p className='text-red-500 p-4'>{error}</p>
 
   const { name, email, specialization, department, appointments, _id } = data
   const appointmentCount = appointments?.length || 0
 
   const tableHeaders = (
     <>
-      <th>Day</th>
+      <th className='border border-gray-300 px-3 py-2 bg-gray-100 text-left'>
+        Day
+      </th>
       {timeIntervals.map((interval, idx) => (
-        <th key={idx}>{interval}</th>
+        <th
+          key={idx}
+          className='border border-gray-300 px-3 py-2 bg-gray-100 text-xs text-gray-700'
+        >
+          {interval}
+        </th>
       ))}
     </>
   )
 
   return (
-    <div>
+    <div className='p-6 bg-white shadow rounded-lg space-y-6'>
       <div>
-        <h3>Doctor Information</h3>
-        <div>
-          <p>Name: {name}</p>
-          <p>Email: {email}</p>
+        <h3 className='text-lg font-semibold text-gray-800 mb-2'>
+          Doctor Information
+        </h3>
+        <div className='text-gray-700'>
+          <p>
+            <span className='font-medium'>Name:</span> {name}
+          </p>
+          <p>
+            <span className='font-medium'>Email:</span> {email}
+          </p>
         </div>
-        <div>
-          <p>Specialty: {specialization}</p>
-          <p>Department: {department}</p>
-        </div>
-        <div>
-          <h3>Appointment Count</h3>
+      </div>
 
-          <p>Total booked appointments: {appointmentCount}</p>
+      <div>
+        <h3 className='text-lg font-semibold text-gray-800 mb-2'>
+          Professional Details
+        </h3>
+        <div className='text-gray-700'>
+          <p>
+            <span className='font-medium'>Specialty:</span> {specialization}
+          </p>
+          <p>
+            <span className='font-medium'>Department:</span> {department}
+          </p>
         </div>
-        <div className='mt-4'>
-          <Link href={{
+      </div>
+
+      <div>
+        <h3 className='text-lg font-semibold text-gray-800 mb-2'>
+          Appointments
+        </h3>
+        <p className='text-gray-700'>
+          Total booked appointments:{' '}
+          <span className='font-bold'>{appointmentCount}</span>
+        </p>
+      </div>
+
+      <div>
+        <Link
+          href={{
             pathname: '/patient/dashboard/book-appointment',
-            query: {
-              id: _id,
-              name
-            }
-          }}> Book Appointment</Link>
-         
-        </div>
+            query: { id: _id, name }
+          }}
+          className='inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition'
+        >
+          Book Appointment
+        </Link>
+      </div>
 
-        <div>
-          <h3>Hospital Schedule</h3>
+      <div>
+        <h3 className='text-lg font-semibold text-gray-800 mb-4'>
+          Hospital Schedule
+        </h3>
+        <div className='overflow-auto rounded border'>
           <Table tableHeaders={tableHeaders} tableData={tableData} />
         </div>
       </div>

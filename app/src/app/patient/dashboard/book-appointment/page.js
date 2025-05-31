@@ -83,7 +83,7 @@ export default function BookAppointmentPage () {
   ]
 
   return (
-    <div>
+    <div className='max-w-2xl mx-auto p-6 bg-white shadow rounded-lg'>
       <Formik
         initialValues={
           id && name
@@ -114,11 +114,12 @@ export default function BookAppointmentPage () {
           isValid,
           setFieldValue
         }) => (
-          <Form>
-            <p>
-              <span>*</span>For any doctor selected, you can select appointment
-              day and time based off the doctor's hospital schedule.
-              <span>*</span>
+          <Form className='space-y-6'>
+            <p className='bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded'>
+              <span className='font-bold'>*</span> For any doctor selected, you
+              can select appointment day and time based off the doctor's
+              hospital schedule.
+              <span className='font-bold'>*</span>
             </p>
 
             {id && name ? (
@@ -170,8 +171,10 @@ export default function BookAppointmentPage () {
             {/* Display selected doctor's available days */}
             {doctorSchedule.length > 0 && (
               <div className='mb-4'>
-                <h4 className='font-semibold'>Doctor Availability</h4>
-                <ul className='list-disc list-inside'>
+                <h4 className='font-semibold text-lg mb-2'>
+                  Doctor Availability
+                </h4>
+                <ul className='list-disc list-inside pl-4 text-gray-700'>
                   {doctorSchedule.map(s => (
                     <li key={s._id}>
                       <span className='font-medium'>{s.day}:</span>
@@ -181,7 +184,7 @@ export default function BookAppointmentPage () {
               </div>
             )}
 
-            <div>
+            <div className='grid grid-cols-1 gap-4'>
               <CustomInput
                 id='day'
                 name='day'
@@ -279,7 +282,7 @@ export default function BookAppointmentPage () {
 
             <button
               type='submit'
-              className='cursor-pointer'
+              className='bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:opacity-50 transition duration-200'
               title={
                 isSubmitting
                   ? 'Submitting'

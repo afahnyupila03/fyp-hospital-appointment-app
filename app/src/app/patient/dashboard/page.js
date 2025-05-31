@@ -8,8 +8,7 @@ import {
   usePatientAppointments,
   usePatientDoctors
 } from '@/hooks/patient/usePatient'
-import PieChart, { DoughnutChart, BarChart } from '@/components/Chart'
-
+import PieChart, { DoughnutChart } from '@/components/Chart'
 import Table from '@/components/Table'
 import Dropdown from '@/components/Dropdown'
 
@@ -96,10 +95,10 @@ const getStatusCounts = appointments => {
 }
 
 const statusColors = {
-  pending: '#facc15', // yellow
-  confirmed: '#22c55e', // green
-  completed: '#3b82f6', // blue
-  canceled: '#ef4444' // red
+  pending: '#facc15',
+  confirmed: '#22c55e',
+  completed: '#3b82f6',
+  canceled: '#ef4444'
 }
 
 export default function PatientDashboardPage () {
@@ -119,32 +118,24 @@ export default function PatientDashboardPage () {
     usePatientNotificationPermission()
 
   useEffect(() => {
-    if (loading) return
-    if (!user) return
+    if (loading || !user) return
 
-    // If permission exist in backend, do nothing.
     if (user.notificationPermission) return
 
-    // Only prompt the browser if permission has not been granted/denied yet.
     if (Notification.permission === 'default') {
       Notification.requestPermission().then(async result => {
         const granted = result === 'granted'
         try {
-          // persist granted result.
           await notificationRequest({ granted })
           user.notificationPermission = granted
         } catch (error) {
-          console.error(
-            'Failed to save patient notification permission: ',
-            error
-          )
+          console.error('Failed to save notification permission: ', error)
         }
       })
     } else {
-      // Browser already has a verdict (granted/denied) but backend hasn't recorded it.
       const granted = Notification.permission === 'granted'
       notificationRequest({ granted }).catch(err =>
-        console.error('Failed to sync patient existing permission:', err)
+        console.error('Failed to sync permission:', err)
       )
     }
   }, [user, notificationRequest])
@@ -154,26 +145,16 @@ export default function PatientDashboardPage () {
     isLoading: loadingAppointments,
     isError: isAppointmentError,
     error: appointmentError,
-    isFetching: fetchingAppointments,
-    refetch: refetchAppointments
+    isFetching: fetchingAppointments
   } = usePatientAppointments(appointmentPage, appointmentLimit)
-  const appointmentFirstPage = appointmentPage === 1
-  const appointmentTotalPages = appointments?.totalPages
-  const appointmentLastPage = appointmentPage === appointmentTotalPages
-  const appointmentCurrentPage = appointments?.currentPage
 
   const {
     data: doctors,
     isLoading: loadingDoctors,
-    refetch: refetchDoctors,
     isError: isDoctorsError,
     error: doctorsError,
     isFetching: fetchingDoctors
   } = usePatientDoctors(doctorsPage, doctorsLimit)
-  const doctorsFirstPage = doctorsPage === 1
-  const doctorsLastPage = doctorsPage === doctors?.totalPages
-  const doctorsTotalPages = doctors?.totalPages
-  const doctorsCurrentPage = doctors?.currentPage
 
   useEffect(() => {
     if (appointments?.appointments) {
@@ -190,20 +171,18 @@ export default function PatientDashboardPage () {
               statusCounts.completed,
               statusCounts.canceled
             ],
-            backgroundColor: ['#facc15', '#22c55e', '#3b82f6', '#ef4444'],
+            backgroundColor: Object.values(statusColors),
             borderRadius: 4
           }
         ]
       }
       setPatientAppointments(doughnutData)
 
-      // Monthly chart appointment representation.
       const monthlyCounts = {}
 
-      appointments?.appointments.forEach(appt => {
-        const date = new Date(appt.createdAt) // or appt.updatedAt
+      appointments.appointments.forEach(appt => {
+        const date = new Date(appt.createdAt)
         const monthLabel = date.toLocaleString('default', { month: 'long' })
-
         monthlyCounts[monthLabel] = (monthlyCounts[monthLabel] || 0) + 1
       })
 
@@ -236,44 +215,56 @@ export default function PatientDashboardPage () {
     }
   }, [appointments])
 
-  if (loadingDoctors || loadingAppointments || !user || loading)
-    return <p>Loading...</p>
-  if (isDoctorsError) {
-    return <p>{doctorsError}</p>
-  }
-  if (isAppointmentError) {
-    return <p>{appointmentError}</p>
+  if (loading || loadingAppointments || loadingDoctors || !user) {
+    return <p className='text-center mt-10 text-lg text-gray-600'>Loading...</p>
   }
 
-  console.log('patients doctors: ', doctors)
+  if (isDoctorsError) return <p>{doctorsError?.message}</p>
+  if (isAppointmentError) return <p>{appointmentError?.message}</p>
 
   const appointmentTableHeaders = (
     <>
-      <th>S/N</th>
-      <th>Doctor</th>
-      <th>Day </th>
-      <th>Time</th>
-      <th>Status</th>
-      <th></th>
+      <th className='px-4 py-3 text-left text-sm font-semibold text-gray-700'>
+        S/N
+      </th>
+      <th className='px-4 py-3 text-left text-sm font-semibold text-gray-700'>
+        Doctor
+      </th>
+      <th className='px-4 py-3 text-left text-sm font-semibold text-gray-700'>
+        Day
+      </th>
+      <th className='px-4 py-3 text-left text-sm font-semibold text-gray-700'>
+        Time
+      </th>
+      <th className='px-4 py-3 text-left text-sm font-semibold text-gray-700'>
+        Status
+      </th>
+      <th className='px-4 py-3'></th>
     </>
   )
+
   const appointmentTableData =
     appointments?.count === 0 ? (
-      <tr>No Booked appointments</tr>
+      <tr>
+        <td colSpan={6} className='text-center text-gray-500 py-4'>
+          No Booked appointments
+        </td>
+      </tr>
     ) : (
-      appointments?.appointments?.map((appointment, index) => (
+      appointments?.appointments.map((appointment, index) => (
         <tr
+          key={appointment._id}
+          className='bg-white hover:bg-gray-50 transition rounded-lg shadow-sm'
           style={{
             backgroundColor: statusColors[appointment.status?.toLowerCase()]
           }}
-          key={appointment._id}
         >
-          <td>{index + 1}</td>
-          <td>{appointment.doctorId.name}</td>
-          <td>{appointment.date}</td>
-          <td>{appointment.timeSlot}</td>
-          <td>{appointment.status}</td>
-          <td>
+          <td className='px-4 py-3'>{index + 1}</td>
+          <td className='px-4 py-3'>{appointment.doctorId.name}</td>
+          <td className='px-4 py-3'>{appointment.date}</td>
+          <td className='px-4 py-3'>{appointment.timeSlot}</td>
+          <td className='px-4 py-3 capitalize'>{appointment.status}</td>
+          <td className='px-4 py-3'>
             <Dropdown actions={appointmentActions(appointment)} />
           </td>
         </tr>
@@ -282,44 +273,59 @@ export default function PatientDashboardPage () {
 
   const doctorsTableHeaders = (
     <>
-      <th>S/N</th>
-      <th>Name</th>
-      <th>Specialty</th>
-      <th>Availability</th>
-      <th>Department</th>
-      <th></th>
+      <th className='px-4 py-3 text-left text-sm font-semibold text-gray-700'>
+        S/N
+      </th>
+      <th className='px-4 py-3 text-left text-sm font-semibold text-gray-700'>
+        Name
+      </th>
+      <th className='px-4 py-3 text-left text-sm font-semibold text-gray-700'>
+        Specialty
+      </th>
+      <th className='px-4 py-3 text-left text-sm font-semibold text-gray-700'>
+        Availability
+      </th>
+      <th className='px-4 py-3 text-left text-sm font-semibold text-gray-700'>
+        Department
+      </th>
+      <th className='px-4 py-3'></th>
     </>
   )
+
   const doctorsTableData =
     doctors?.count === 0 ? (
-      <tr>No registered doctors in system</tr>
+      <tr>
+        <td colSpan={6} className='text-center text-gray-500 py-4'>
+          No registered doctors
+        </td>
+      </tr>
     ) : (
-      doctors?.doctors?.map((doctor, index) => (
+      doctors?.doctors.map((doctor, index) => (
         <tr
-          style={{
-            backgroundColor: index % 2 === 0 ? '#ceceff' : '#e6e6ff'
-          }}
           key={doctor._id}
+          className='hover:bg-gray-50 transition rounded-lg shadow-sm'
+          style={{
+            backgroundColor: index % 2 === 0 ? '#f5f5ff' : '#e9e9ff'
+          }}
         >
-          <td>{index + 1}</td>
-          <td>{doctor.name}</td>
-          <td>{doctor.specialization}</td>
+          <td className='px-4 py-3'>{index + 1}</td>
+          <td className='px-4 py-3'>{doctor.name}</td>
+          <td className='px-4 py-3'>{doctor.specialization}</td>
           <td
-            className='cursor-pointer'
-            title="Click to view the doctor's profile and hospital schedule"
+            className='px-4 py-3 text-blue-600 cursor-pointer hover:underline'
+            title='Click to view schedule'
             onClick={() =>
               router.push(`/patient/dashboard/doctors/${doctor._id}`)
             }
           >
-            {doctor.schedules.slice(0, 1)?.map(schedule => (
+            {doctor.schedules.slice(0, 1).map(schedule => (
               <span key={schedule._id}>
                 {schedule.day} at {schedule.time}...
               </span>
             ))}
           </td>
-
-          <td>{doctor.department}</td>
-          <td>
+          <td className='px-4 py-3'>{doctor.department}</td>
+          <td className='px-4 py-3'>
             <Dropdown actions={doctorsActions(doctor)} />
           </td>
         </tr>
@@ -327,61 +333,65 @@ export default function PatientDashboardPage () {
     )
 
   return (
-    <div>
-      {/* Charts section. */}
-      {/* Appointment breakdown by status */}
-      {appointments?.count === 0 ? (
-        <p className='mt-10 text-center text-gray-500'>
-          No appointment data to display in charts.
-        </p>
-      ) : (
-        <DoughnutChart
-          chartData={patientAppointments}
-          text='Appointment Status Breakdown'
+    <div className='px-4 py-8 space-y-8'>
+      {/* Chart Section */}
+      <div className='flex flex-col md:flex-row gap-8 justify-center px-4'>
+        {appointments?.count === 0 ? (
+          <p className='text-center text-gray-500 w-full'>
+            No appointment data for charts.
+          </p>
+        ) : (
+          <>
+            <div className='bg-white shadow-lg p-6 rounded-2xl w-full md:w-1/2'>
+              <h3 className='text-lg font-semibold mb-4 text-center'>
+                Appointment Status Breakdown
+              </h3>
+              <DoughnutChart chartData={patientAppointments} />
+            </div>
+            <div className='bg-white shadow-lg p-6 rounded-2xl w-full md:w-1/2'>
+              <h3 className='text-lg font-semibold mb-4 text-center'>
+                Appointments by Month
+              </h3>
+              <PieChart chartData={appointmentMonthlyData} />
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Appointments Table */}
+      <div className='bg-white shadow-md p-4 rounded-xl'>
+        <h2 className='text-lg font-semibold mb-2'>Appointments</h2>
+        <Table
+          tableHeaders={appointmentTableHeaders}
+          tableData={appointmentTableData}
+          currentPage={appointments?.currentPage}
+          totalPages={appointments?.totalPages}
+          isFetching={fetchingAppointments}
+          isFirstPage={appointmentPage === 1}
+          isLastPage={appointmentPage === appointments?.totalPages}
+          nextPageHandler={() =>
+            setAppointmentPage(p => (p < appointments.totalPages ? p + 1 : p))
+          }
+          prevPageHandler={() => setAppointmentPage(p => Math.max(p - 1, 1))}
         />
-      )}
+      </div>
 
-      {/* Appointment breakdown by booked periods (month). */}
-      {appointments?.count === 0 ? (
-        <p className='mt-10 text-center text-gray-500'>
-          No appointment data to display in charts.
-        </p>
-      ) : (
-        <PieChart
-          chartData={appointmentMonthlyData}
-          text='Appointments by Month'
+      <div className='bg-white shadow-md p-6 rounded-2xl space-y-4'>
+        <h2 className='text-xl font-semibold'>Doctors</h2>
+        <Table
+          tableHeaders={doctorsTableHeaders}
+          tableData={doctorsTableData}
+          currentPage={doctors?.currentPage}
+          totalPages={doctors?.totalPages}
+          isFetching={fetchingDoctors}
+          isFirstPage={doctorsPage === 1}
+          isLastPage={doctorsPage === doctors?.totalPages}
+          nextPageHandler={() =>
+            setDoctorsPage(p => (p < doctors.totalPages ? p + 1 : p))
+          }
+          prevPageHandler={() => setDoctorsPage(p => Math.max(p - 1, 1))}
         />
-      )}
-
-      {/* Appointment Table */}
-      <Table
-        tableHeaders={appointmentTableHeaders}
-        tableData={appointmentTableData}
-        currentPage={appointmentCurrentPage}
-        totalPages={appointmentTotalPages}
-        isFetching={fetchingAppointments}
-        isFirstPage={appointmentFirstPage}
-        isLastPage={appointmentLastPage}
-        nextPageHandler={() =>
-          setAppointmentPage(p => (p < appointmentTotalPages ? p + 1 : p))
-        }
-        prevPageHandler={() => setDoctorsPage(p => Math.max(p - 1, 1))}
-      />
-
-      {/* Doctor Table */}
-      <Table
-        tableHeaders={doctorsTableHeaders}
-        tableData={doctorsTableData}
-        currentPage={doctorsCurrentPage}
-        totalPages={doctorsTotalPages}
-        isFetching={fetchingDoctors}
-        isFirstPage={doctorsFirstPage}
-        isLastPage={doctorsLastPage}
-        nextPageHandler={() =>
-          setDoctorsPage(p => (p < doctorsTotalPages ? p + 1 : p))
-        }
-        prevPageHandler={() => setDoctorsPage(p => Math.max(p - 1, 1))}
-      />
+      </div>
     </div>
   )
 }
