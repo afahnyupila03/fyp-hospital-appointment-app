@@ -1,16 +1,16 @@
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 
-const Schema = mongoose.Schema
+const Schema = mongoose.Schema;
 
 const logoutSchema = new Schema(
   {
     token: {
       type: String,
       required: true,
-      unique: true
-    }
+      unique: true,
+    },
   },
   { timestamps: true }
-)
+);
 
-module.exports = mongoose.model('Logout', logoutSchema)
+module.exports = mongoose.model("Logout", logoutSchema);

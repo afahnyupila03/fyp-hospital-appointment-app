@@ -2,16 +2,14 @@ const {
   initAdmin,
   loginAdmin,
   logoutAdmin,
+  getAdmin,
 } = require("../../controller/Admin/adminAuth");
 
 const { auth, restrictTo } = require("../../middlewares/auth");
 
-const express = require("express");
-
-const router = express.Router();
-
-router.post("/register", initAdmin);
-router.post("/login", loginAdmin);
-router.post("/logout", auth, restrictTo("admin"), logoutAdmin);
-
-module.exports = router;
+module.exports = (router) => {
+  router.post("/register", initAdmin);
+  router.post("/login", loginAdmin);
+  router.get('/me', auth, restrictTo('admin'), getAdmin)
+  router.post("/logout", auth, restrictTo("admin"), logoutAdmin);
+};

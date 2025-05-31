@@ -8,7 +8,7 @@ const User = require("../models/user");
 
 const JWT_SECRETS = {
   admin: "admin_secret_token",
-  doctor: "doctor_secrete_token",
+  doctor: "doctor_secret_token",
   patient: "patient_secret_token",
 };
 
@@ -63,7 +63,7 @@ exports.auth = async (req, res, next) => {
     }
 
     const MODEL = ROLE_MODELS[matchedRole];
-    const user = await MODEL.findById(decoded.userId);
+    const user = await MODEL.findById(decoded.id);
 
     if (!user) {
       return res.status(StatusCodes.UNAUTHORIZED).json({
@@ -88,177 +88,16 @@ exports.auth = async (req, res, next) => {
   }
 };
 
-exports.restrictTo = (role) => {
+exports.restrictTo = (...roles) => {
   return (req, res, next) => {
     const user = req.user;
 
-    if (!user || user.role !== role) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({
-        message: `${role[0].toUpperCase() + role.slice(1)} privileges required`,
+    if (!user || !roles.includes(user.role)) {
+      return res.status(StatusCodes.FORBIDDEN).json({
+        message: `Access denied, Required role: ${roles.join(" or ")}`,
       });
     }
 
     next();
   };
-};
-
-// Usage:
-// app.get('/admin-route', auth, restrictTo("admin"))
-
-exports.isAdmin = (req, res, next) => {
-  const user = req.user;
-  const userRole = req.user.role;
-  if (!user || userRole !== "admin") {
-    return res.status(StatusCodes.FORBIDDEN).json({
-      message: "Admin privileges required",
-    });
-  }
-
-  next();
-};
-
-exports.isDoctor = (req, res, next) => {
-  const user = req.user;
-  const role = user.role;
-
-  if (user || role !== "doctor") {
-    return res.status(StatusCodes.UNAUTHORIZED).json({
-      message: "Doctor privileges required",
-    });
-  }
-
-  next();
-};
-
-exports.isPatient = (req, res, next) => {
-  const user = req.user;
-  const role = user.role;
-
-  if (user || role !== "patient") {
-    return res.status(StatusCodes.UNAUTHORIZED).json({
-      message: "Patient privileges required",
-    });
-  }
-
-  next();
-};
-
-exports.userAuth = async (req, res, next) => {
-  const authHeader = req.get("Authorization");
-  if (!authHeader) {
-    return res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ message: "patient account not authenticated" });
-  }
-
-  const token = authHeader.split(" ")[1];
-  console.log("auth token: ", token);
-  if (!token) {
-    return res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ message: "patient token missing." });
-  }
-
-  // Check if token is blacklisted.
-  const blacklisted = await Logout.findOne({ token });
-  if (blacklisted) {
-    return res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ message: "Token blacklisted, please log in again" });
-  }
-
-  // Verify token
-  // let decodedToken
-  try {
-    const decodedToken = jwt.verify(token, "patientToken");
-
-    console.log("✅ decodedToken:", decodedToken);
-
-    // Confirm this is a string
-    req.userId = decodedToken.userId?.toString();
-
-    console.log("✅ req.userId:", req.userId);
-
-    if (!req.userId) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({
-        message: "Invalid token payload.",
-      });
-    }
-
-    next();
-  } catch (error) {
-    return res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ message: "Invalid or expired token." });
-  }
-};
-
-exports.doctorAuth = async (req, res, next) => {
-  const authHeader = req.get("Authorization");
-  if (!authHeader)
-    res.status(401).json({ message: "doctor account not authenticated" });
-
-  const token = authHeader.split(" ")[1];
-  if (!token)
-    res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ message: "doctor token missing." });
-
-  const blacklisted = await Logout.findOne({ token });
-
-  if (blacklisted)
-    res
-      .status(StatusCodes.FORBIDDEN)
-      .json({ message: "Token blacklisted, please log in again" });
-
-  let decodedToken;
-
-  try {
-    decodedToken = jwt.verify(token, "doctorToken");
-  } catch (error) {
-    return res
-      .status(StatusCodes.FORBIDDEN)
-      .json({ message: "Invalid or expired token." });
-  }
-
-  req.userId = decodedToken.userId;
-
-  next();
-};
-
-exports.adminAuth = async (req, res, next) => {
-  const authHeader = req.get("Authorization");
-  if (!authHeader) {
-    return res.status(StatusCodes.UNAUTHORIZED).json({
-      message: "admin account not authenticated",
-    });
-  }
-
-  const token = authHeader.split(" ")[1];
-  if (!token) {
-    return res.status(StatusCodes.FORBIDDEN).json({
-      message: "admin token is missing, login to continue",
-    });
-  }
-
-  const blacklisted = await Logout.findOne({ token });
-  if (!blacklisted) {
-    return res.status(StatusCodes.UNAUTHORIZED).json({
-      message: "Please log in to admin account perform action",
-    });
-  }
-
-  let decodedToken;
-  try {
-    decodedToken = jwt.verify(token, "admin_secret_token");
-  } catch (error) {
-    return res
-      .status(StatusCodes.FORBIDDEN)
-      .json({ message: "Invalid or expired token." });
-  }
-
-  req.userId = decodedToken.userId;
-  req.userRole = decodedToken.role;
-
-  next();
 };
