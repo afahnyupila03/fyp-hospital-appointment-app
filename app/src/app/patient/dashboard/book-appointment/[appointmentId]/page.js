@@ -44,8 +44,6 @@ export default function UpdateAppointmentPage () {
   useEffect(() => {
     if (isEditing && appointmentId && data) {
       const { doctorId, timeSlot, date, notes, reason } = data
-      console.log('appointment day: ', date)
-
       const { _id, name, schedules } = doctorId
 
       setSelectedDoctor(name)
@@ -71,18 +69,14 @@ export default function UpdateAppointmentPage () {
     }
   }, [isEditing, appointmentId, data, doctorsData])
 
-  if (isLoading) return <p>Loading...</p>
-  if (isError) return <p>{error}</p>
-
-  if (data) {
-    console.log('appointment data: ', data?.doctorId)
-  }
+  if (isLoading) return <p className='text-gray-500'>Loading...</p>
+  if (isError) return <p className='text-red-500'>{error}</p>
 
   let doctorOptions
   if (loadingDoctors) {
     doctorOptions = (
       <option value='' disabled>
-        Loading doctors
+        Loading doctors...
       </option>
     )
   } else if (isDoctorsError) {
@@ -92,34 +86,21 @@ export default function UpdateAppointmentPage () {
       </option>
     )
   } else if (doctorsData) {
-    doctorOptions = doctorsData?.doctors.map(doctor => {
-      console.log('selected doctor: ', doctor._id, doctor.name)
-      return (
-        <option key={doctor._id} value={doctor._id}>
-          {doctor.name}
-        </option>
-      )
-    })
+    doctorOptions = doctorsData?.doctors.map(doctor => (
+      <option key={doctor._id} value={doctor._id}>
+        {doctor.name}
+      </option>
+    ))
   }
 
   const reasons = [
-    {
-      key: 'consultation',
-      label: 'Consultation'
-    },
+    { key: 'consultation', label: 'Consultation' },
     { key: 'follow-up', label: 'Follow-up' },
     { key: 'referral', label: 'Referral' }
   ]
 
   const updateAppointmentHandler = async values => {
-    console.log('updating')
-    let id
-    if (data) {
-      const { _id } = data
-      id = _id
-    }
-    console.log('updating id: ', id)
-
+    const id = data?._id
     const payload = {
       doctor: values.doctor,
       date: values.day,
@@ -128,14 +109,16 @@ export default function UpdateAppointmentPage () {
       notes: values.note
     }
     await updateAppointment({ id, payload })
-    console.log('appointment update success')
     refetch()
     router.push('/patient/dashboard/appointments')
   }
 
   return (
-    <div>
-      <p>Update an appointment ppp</p>
+    <div className='max-w-2xl mx-auto px-4 py-8'>
+      <h1 className='text-2xl font-semibold text-gray-800 mb-6'>
+        Update Appointment
+      </h1>
+
       <Formik
         initialValues={initialValues}
         enableReinitialize={true}
@@ -151,12 +134,12 @@ export default function UpdateAppointmentPage () {
           touched,
           setFieldValue
         }) => (
-          <Form>
+          <Form className='space-y-5 bg-white p-6 rounded-xl shadow border'>
             <CustomInput
               as='select'
               id='doctor'
               name='doctor'
-              label='Select doctor'
+              label='Select Doctor'
               onBlur={handleBlur}
               value={values.doctor}
               onChange={e => {
@@ -164,22 +147,17 @@ export default function UpdateAppointmentPage () {
                 const selectedDoctor = doctorsData?.doctors.find(
                   doc => doc._id === selectedId
                 )
-
                 const newSchedules = selectedDoctor?.schedules || []
                 const timeStillValid = newSchedules.some(
                   s => s.time === values.time
                 )
-
                 setSelectedDoctor(selectedDoctor?.name)
                 setDoctorSchedule(newSchedules)
                 setFieldValue('doctor', selectedId)
 
-                // ❗ Invalidate previous time selection if not available in new schedule
                 if (!timeStillValid && values.time) {
                   setFieldValue('time', '')
-                  alert(
-                    'Selected time is not available for this doctor. Please select a new time.'
-                  )
+                  alert('Selected time is not available for this doctor.')
                 }
               }}
               errors={errors}
@@ -189,97 +167,91 @@ export default function UpdateAppointmentPage () {
               {doctorOptions}
             </CustomInput>
 
-            {/* Display selected doctor's available days */}
             {doctorSchedule.length > 0 && (
-              <div>
-                <h4>Doctor Availability</h4>
-                <ul>
-                  {doctorSchedule?.map((s, i) => (
-                    <li key={s._id || i}>
-                      <span>{s.day}</span>
-                    </li>
+              <div className='bg-gray-50 p-4 rounded'>
+                <h4 className='text-sm font-medium text-gray-700 mb-2'>
+                  Doctor Availability
+                </h4>
+                <ul className='list-disc list-inside text-gray-600 text-sm'>
+                  {doctorSchedule.map((s, i) => (
+                    <li key={s._id || i}>{s.day}</li>
                   ))}
                 </ul>
               </div>
             )}
 
-            <div>
-              <CustomInput
-                id='day'
-                name='day'
-                type='date'
-                value={values.day}
-                label='Day'
-                placeholder='Appointment date'
-                onChange={e => {
-                  const inputDate = new Date(e.target.value)
-                  const today = new Date()
+            <CustomInput
+              id='day'
+              name='day'
+              type='date'
+              value={values.day}
+              label='Appointment Date'
+              placeholder='Select date'
+              onChange={e => {
+                const inputDate = new Date(e.target.value)
+                const today = new Date()
+                inputDate.setHours(0, 0, 0, 0)
+                today.setHours(0, 0, 0, 0)
+                const days = [
+                  'Sunday',
+                  'Monday',
+                  'Tuesday',
+                  'Wednesday',
+                  'Thursday',
+                  'Friday',
+                  'Saturday'
+                ]
+                const inputDay = days[inputDate.getDay()]
 
-                  // Zero out the time for accurate date comparison
-                  inputDate.setHours(0, 0, 0, 0)
-                  today.setHours(0, 0, 0, 0)
+                if (inputDate < today) {
+                  setFieldValue('day', '')
+                  alert("Can't select a past date.")
+                } else if (!doctorSchedule.some(s => s.day === inputDay)) {
+                  setFieldValue('day', '')
+                  alert(`Doctor is not available on ${inputDay}`)
+                } else {
+                  setFieldValue('day', e.target.value)
+                }
+              }}
+              onBlur={handleBlur}
+              errors={errors}
+              touched={touched}
+              min={new Date().toISOString().split('T')[0]}
+            />
 
-                  // Get selected day of the week in title case (e.g. "Monday")
-                  const days = [
-                    'Sunday',
-                    'Monday',
-                    'Tuesday',
-                    'Wednesday',
-                    'Thursday',
-                    'Friday',
-                    'Saturday'
-                  ]
-                  const inputDay = days[inputDate.getDay()]
-
-                  if (inputDate < today) {
-                    setFieldValue('day', '')
-                    alert("Can't book appointment for a date in the past")
-                  } else if (!doctorSchedule.some(s => s.day === inputDay)) {
-                    setFieldValue('day', '')
-                    alert(`Doctor is not available on ${inputDay}`)
-                  } else {
-                    setFieldValue('day', e.target.value)
-                  }
-                }}
-                onBlur={handleBlur}
-                errors={errors}
-                touched={touched}
-                min={new Date().toISOString().split('T')[0]} // disables past dates
-              />
-
-              <CustomInput
-                id='time'
-                name='time'
-                as='select'
-                label='Time'
-                onChange={handleChange}
-                onBlur={handleBlur}
-                value={values.time}
-                errors={errors}
-                touched={touched}
-              >
-                <option value={values.time}>{values.time}</option>
-                {doctorSchedule.map((s, i) => (
-                  <option key={s._id} value={s.time}>
-                    {s.time}
-                  </option>
-                ))}
-              </CustomInput>
-            </div>
+            <CustomInput
+              id='time'
+              name='time'
+              as='select'
+              label='Time Slot'
+              onChange={handleChange}
+              onBlur={handleBlur}
+              value={values.time}
+              errors={errors}
+              touched={touched}
+            >
+              <option value={values.time}>{values.time}</option>
+              {doctorSchedule.map((s, i) => (
+                <option key={s._id || i} value={s.time}>
+                  {s.time}
+                </option>
+              ))}
+            </CustomInput>
 
             <CustomInput
               as='select'
               id='reason'
-              label='Reason'
-              placeholder='Appointment reason'
               name='reason'
+              label='Reason for Appointment'
               onChange={handleChange}
-              value={values.reason}
               onBlur={handleBlur}
+              value={values.reason}
+              errors={errors}
+              touched={touched}
             >
               <option value={values.reason}>{values.reason}</option>
               {reasons.map(r => (
-                <option value={r.key} key={r.key}>
+                <option key={r.key} value={r.key}>
                   {r.label}
                 </option>
               ))}
@@ -289,8 +261,8 @@ export default function UpdateAppointmentPage () {
               as='textarea'
               id='note'
               name='note'
-              label='Notes'
-              placeholder='Please give a brief explanation'
+              label='Additional Notes'
+              placeholder='Provide context or details (optional)'
               value={values.note}
               onChange={handleChange}
               onBlur={handleBlur}
@@ -298,9 +270,19 @@ export default function UpdateAppointmentPage () {
               touched={touched}
             />
 
-            <button type='submit' disabled={isSubmitting || !isValid}>
-              Update
-            </button>
+            <div className='pt-4'>
+              <button
+                type='submit'
+                disabled={isSubmitting || !isValid}
+                className={`w-full py-2 px-4 rounded text-white font-semibold transition ${
+                  isSubmitting || !isValid
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700'
+                }`}
+              >
+                {isSubmitting ? 'Updating...' : 'Update Appointment'}
+              </button>
+            </div>
           </Form>
         )}
       </Formik>
