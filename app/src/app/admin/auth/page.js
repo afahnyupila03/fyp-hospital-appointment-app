@@ -49,7 +49,7 @@ export default function AdminAuth () {
       await signinHandler(email, password, role)
       actions.resetForm()
     } catch (error) {
-      console.error('SIGNED_IN_USER_ERROR: ', error.message)
+      console.error('SIGNED_IN_USER_ERROR: ', error, error.message)
       actions.setSubmitting(false)
     }
   }
