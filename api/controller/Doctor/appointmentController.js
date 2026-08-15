@@ -12,7 +12,7 @@ exports.viewAppointments = async (req, res) => {
 
     const { page = 1, limit = 10 } = req.query
 
-    console.log('doctor appointments id: ', doctorId)
+    // console.log('doctor appointments id: ', doctorId)
 
     const appointments = await Appointment.find({ doctorId })
       .skip((page - 1) * limit)
@@ -28,7 +28,7 @@ exports.viewAppointments = async (req, res) => {
     const totalPages = Math.ceil(count / limit)
     const currentPage = parseInt(page)
 
-    console.log('APPOINTMENTS: ', appointments)
+    // console.log('APPOINTMENTS: ', appointments)
 
     res.status(StatusCodes.OK).json({
       message: 'doctor appointments',
@@ -38,7 +38,7 @@ exports.viewAppointments = async (req, res) => {
       totalPages
     })
   } catch (error) {
-    console.log('error fetching doctor appointments: ', error.message)
+    // console.log('error fetching doctor appointments: ', error.message)
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: 'failed to fetch appointments',
       error: error.message
@@ -80,7 +80,7 @@ exports.viewAppointment = async (req, res) => {
       appointment
     })
   } catch (error) {
-    console.log('error fetching doctor appointment: ', error.message)
+    // console.log('error fetching doctor appointment: ', error.message)
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: 'failed to fetch appointments',
       error: error.message
