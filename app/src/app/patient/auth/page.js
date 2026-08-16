@@ -36,11 +36,11 @@ export default function PatientAuthPage () {
       if (!email) throw new Error('Please input your email')
       if (!password || password.length < 6) throw new Error('Password must be at least 6 characters')
 
-      await signupHandler(name, email, password, role)
+      await signupHandler(values, role)
 
       actions.resetForm()
     } catch (error) {
-      console.error('patient signup error:', error)
+      console.error('patient signup error:', error, error.message)
       actions.setSubmitting(false)
     } finally {
       setLoading(false)

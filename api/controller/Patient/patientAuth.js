@@ -14,7 +14,7 @@ const generateToken = user => {
     },
     'patient_secret_token',
     {
-      expiresIn: '2hr'
+      expiresIn: '7d'
     }
   )
 }

@@ -15,10 +15,12 @@ const getHeaders = () => {
   }
 }
 
+const URL = `${process.env.NEXT_PUBLIC_BASE_URL/admin}`
+
 export const getPatientsService = async (page, limit) => {
   try {
     const res = await fetch(
-      `http://localhost:4000/admin/view-patients?page=${page}&limit=${limit}`,
+      `${URL}/view-patients?page=${page}&limit=${limit}`,
       {
         headers: getHeaders()
       }
@@ -32,8 +34,9 @@ export const getPatientsService = async (page, limit) => {
     const count = data.count
     const totalPages = data.totalPages
     const currentPage = data.currentPage
+    const message = data?.message
 
-    return { patients, count, totalPages, currentPage }
+    return { message, patients, count, totalPages, currentPage }
   } catch (error) {
     console.error('error fetching patients from servers: ', error.message)
     throw new Error(error.message)
@@ -44,7 +47,7 @@ export const getPatientsService = async (page, limit) => {
 
 export const getPatientService = async id => {
   try {
-    const res = await fetch(`http://localhost:4000/admin/view-patient/${id}`, {
+    const res = await fetch(`${URL}/view-patient/${id}`, {
       headers: getHeaders()
     })
 
@@ -62,7 +65,7 @@ export const getPatientService = async id => {
 }
 
 export const archivePatientService = async (id, data) => {
-  const res = await fetch(`http://localhost:4000/admin/archive-patient/${id}`, {
+  const res = await fetch(`${URL}/archive-patient/${id}`, {
     method: 'PUT',
     headers: getHeaders(),
     body: JSON.stringify(data)
@@ -81,7 +84,7 @@ export const archivePatientService = async (id, data) => {
 
 export const unarchivePatientService = async (id, data) => {
   const res = await fetch(
-    `http://localhost:4000/admin/unarchive-patient/${id}`,
+    `${URL}/unarchive-patient/${id}`,
     {
       method: 'PUT',
       headers: getHeaders(),

@@ -95,15 +95,19 @@ exports.viewDoctors = async (req, res) => {
       .select('-password')
       .sort({ createdAt: -1 })
 
-    if (!doctors) {
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        message: 'Doctors not found'
-      })
-    }
-
     const count = await Doctor.find().countDocuments()
     const totalPages = Math.ceil(count / limit)
     const currentPage = parseInt(page)
+
+    if (!doctors) {
+      return res.status(StatusCodes.OK).json({
+        message: 'No doctor profiles found in system.',
+        doctors: [],
+        count,
+        totalPages,
+        currentPage
+      })
+    }
 
     res.status(StatusCodes.OK).json({
       message: 'view all doctors',

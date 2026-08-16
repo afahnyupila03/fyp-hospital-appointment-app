@@ -247,11 +247,11 @@ export default function PatientDashboardPage () {
     appointments?.count === 0 ? (
       <tr>
         <td colSpan={6} className='text-center text-gray-500 py-4'>
-          No Booked appointments
+          {appointments?.message}
         </td>
       </tr>
     ) : (
-      appointments?.appointments.map((appointment, index) => (
+      appointments?.appointments?.map((appointment, index) => (
         <tr
           key={appointment._id}
           className='bg-white hover:bg-gray-50 transition rounded-lg shadow-sm'
@@ -296,7 +296,7 @@ export default function PatientDashboardPage () {
     doctors?.count === 0 ? (
       <tr>
         <td colSpan={6} className='text-center text-gray-500 py-4'>
-          No registered doctors
+          {doctors?.message}
         </td>
       </tr>
     ) : (

@@ -7,7 +7,7 @@ export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const sock = clientIo("http://localhost:4000", {
+    const sock = clientIo(`${process.env.NEXT_PUBLIC_BASE_URL}`, {
       autoConnect: true,
       transports: ["websocket", 'polling'],
     });

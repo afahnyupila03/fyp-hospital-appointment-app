@@ -22,15 +22,19 @@ exports.viewPatients = async (req, res) => {
       .limit(parseInt(limit))
       .skip((page - 1) * limit)
 
-    if (!patients) {
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        message: 'Error, patients not found'
-      })
-    }
-
     const count = await User.find().countDocuments()
     const totalPages = Math.ceil(count / limit)
     const currentPage = parseInt(page)
+
+    if (!patients) {
+      return res.status(StatusCodes.OK).json({
+        message: 'No patient profiles found in system.',
+        count,
+        totalPages,
+        currentPage,
+        patients: []
+      })
+    }
 
     res.status(StatusCodes.OK).json({
       message: 'viewing patients',

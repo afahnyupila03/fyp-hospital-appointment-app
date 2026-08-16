@@ -30,7 +30,10 @@ exports.viewAppointments = async (req, res) => {
     const currentPage = parseInt(page)
 
     if (!appointments || appointments.length === 0) {
-      return res.status(StatusCodes.BAD_REQUEST).json({
+      return res.status(StatusCodes.OK).json({
+        count,
+        totalPages, currentPage,
+        appointments: [],
         message: 'No booked appointments'
       })
     }
@@ -313,7 +316,7 @@ exports.viewDoctors = async (req, res) => {
       .limit(parseInt(limit))
 
     if (!doctors || doctors.length === 0) {
-      return res.status(StatusCodes.NOT_FOUND).json({
+      return res.status(StatusCodes.OK).json({
         message: 'No doctors registered at the moment.'
       })
     }

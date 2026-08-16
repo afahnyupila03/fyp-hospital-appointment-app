@@ -59,7 +59,7 @@ export const AppProvider = ({ children }) => {
   const [loading, setLoading] = useState(false)
 
   const getApiUrl = (role, endpoint) =>
-    `http://localhost:4000/${role}/${endpoint}`
+    `${process.env.NEXT_PUBLIC_BASE_URL}/${role}/${endpoint}`
 
   useEffect(() => {
     const role = localStorage.getItem('role')
@@ -87,65 +87,69 @@ export const AppProvider = ({ children }) => {
   }, [])
 
   //   Fetch current user info from express backend (via token in localStorage)
-  const getCurrentUser = async () => {
-    try {
-      const token = localStorage.getItem('token')
-      const role = localStorage.getItem('role')
-      if (!token) throw new Error('No authenticated token found')
+ const getCurrentUser = async () => {
+  try {
+    const token = localStorage.getItem('token')
+    const role = localStorage.getItem('role')
 
-      if (!isAuthenticated()) {
+    if (!token || !role) {
+      dispatch({ type: CONSTANTS.SIGN_OUT })
+      dispatch({ type: CONSTANTS.SET_LOADING, payload: { loading: false } })
+      return
+    }
+
+    // Check token expiry before making request
+    try {
+      const decoded = jwtDecode(token)
+      const currentTime = Date.now() / 1000
+      if (decoded.exp < currentTime) {
         localStorage.removeItem('token')
+        localStorage.removeItem('role')
+        dispatch({ type: CONSTANTS.SIGN_OUT })
+        dispatch({ type: CONSTANTS.SET_LOADING, payload: { loading: false } })
         router.replace(`/${role}/auth`)
         return
       }
-
-      const res = await fetch(getApiUrl(role, 'me'), {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
-
-      if (!res.ok) {
-        const data = await res.json()
-
-        if (res.status === 403) {
-          localStorage.removeItem('token')
-          // localStorage.removeItem("role");
-          dispatch({ type: CONSTANTS.SIGN_OUT })
-        }
-
-        throw new Error(data.error || 'Failed to fetch current user')
-      }
-
-      const data = await res.json()
-      let user
-      switch (role) {
-        case 'admin':
-          user = data.admin
-          break
-        case 'doctor':
-          user = data.doctor
-          break
-        case 'patient':
-          user = data.patient
-          break
-        default:
-          throw new Error('unknown user role')
-      }
-
-      dispatch({ type: CONSTANTS.SET_USER, payload: { user } })
-
-      return user
-    } catch (error) {
-      dispatch({
-        type: CONSTANTS.ERROR,
-        payload: {
-          error: error.message
-        }
-      })
-      throw error
+    } catch {
+      localStorage.removeItem('token')
+      localStorage.removeItem('role')
+      dispatch({ type: CONSTANTS.SIGN_OUT })
+      dispatch({ type: CONSTANTS.SET_LOADING, payload: { loading: false } })
+      return
     }
+
+    const res = await fetch(getApiUrl(role, 'me'), {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+
+    if (!res.ok) {
+      const data = await res.json()
+      localStorage.removeItem('token')
+      localStorage.removeItem('role')
+      dispatch({ type: CONSTANTS.SIGN_OUT })
+      dispatch({ type: CONSTANTS.SET_LOADING, payload: { loading: false } })
+      router.replace(`/${role}/auth`)
+      throw new Error(data.error || 'Session expired')
+    }
+
+    const data = await res.json()
+    let user
+    switch (role) {
+      case 'admin': user = data.admin; break
+      case 'doctor': user = data.doctor; break
+      case 'patient': user = data.patient; break
+      default: throw new Error('Unknown user role')
+    }
+
+    dispatch({ type: CONSTANTS.SET_USER, payload: { user } })
+    dispatch({ type: CONSTANTS.SET_LOADING, payload: { loading: false } })
+    return user
+
+  } catch (error) {
+    dispatch({ type: CONSTANTS.SET_LOADING, payload: { loading: false } })
+    dispatch({ type: CONSTANTS.ERROR, payload: { error: error.message } })
   }
+}
 
   const signupHandler = async (formData, role) => {
     try {
@@ -251,6 +255,7 @@ export const AppProvider = ({ children }) => {
 
       return userData
     } catch (error) {
+      console.log('ERROR_LOGIN: ', error)
       dispatch({
         type: CONSTANTS.ERROR,
         payload: { error: error }

@@ -22,6 +22,7 @@ export default function PatientsHomePage () {
   const currentPage = data?.currentPage
   const firstPage = page === 1
   const lastPage = page === totalPages
+  const message = data?.message
 
   const { mutateAsync: archivePatient } = useArchivePatient()
   const { mutateAsync: unarchivePatient } = useUnarchivePatient()
@@ -79,7 +80,7 @@ export default function PatientsHomePage () {
           colSpan={4}
           className='px-4 py-6 text-center text-gray-500 italic border-b'
         >
-          No patients found.
+          {message}
         </td>
       </tr>
     ) : (
