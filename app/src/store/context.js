@@ -1,8 +1,8 @@
 'use client'
 
 import { jwtDecode } from 'jwt-decode'
-import { useRouter } from 'next/navigation'
-import React, { useContext, useEffect, useReducer } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import React, { useContext, useEffect, useReducer, useState } from 'react'
 
 export const CONSTANTS = {
   SIGN_UP: 'SIGN_UP',
@@ -54,6 +54,9 @@ export const AppReducer = (state, action) => {
 export const AppProvider = ({ children }) => {
   const [state, dispatch] = useReducer(AppReducer, defaultAppState)
   const router = useRouter()
+  const pathname = usePathname()
+
+  const [loading, setLoading] = useState(false)
 
   const getApiUrl = (role, endpoint) =>
     `${process.env.NEXT_PUBLIC_BASE_URL}/${role}/${endpoint}`
@@ -62,8 +65,14 @@ export const AppProvider = ({ children }) => {
     const role = localStorage.getItem('role')
     const token = localStorage.getItem('token')
 
-    if (token && role) {
-      getCurrentUser()
+    if (token && isAuthenticated()) {
+      getCurrentUser().finally(() => setLoading(false))
+    } else if (role) {
+      // Save current path before directing to login.
+      localStorage.setItem('redirectAfterAuth', pathname)
+      console.log('redirectAfterAuth: ', pathname)
+      router.replace(`/${role}/auth`)
+      setLoading(false)
     } else {
       dispatch({type:CONSTANTS.SET_LOADING, payload: {loading: false}})
 
@@ -200,6 +209,17 @@ export const AppProvider = ({ children }) => {
   }
 
   const signinHandler = async (email, password, role) => {
+    const redirectPath = localStorage.getItem('redirectAfterAuth')
+
+    // Optional: avoid redirecting back to `/auth` or similar routes
+    const isValidRedirect =
+      redirectPath &&
+      !redirectPath.includes('/auth') &&
+      !redirectPath.includes('/logout')
+    alert(redirectPath)
+
+    localStorage.removeItem('redirectAfterAuth')
+
     try {
       console.log('sign-in route: ', getApiUrl(role, 'login'))
       const res = await fetch(getApiUrl(role, 'login'), {
@@ -212,7 +232,7 @@ export const AppProvider = ({ children }) => {
 
       const data = await res.json()
       console.log('context data: ', data)
-      if (!res.ok) throw new Error(data.error || data.message )
+      if (!res.ok) throw new Error(data.error || data.message)
 
       const { token } = data
       let { userData } = data
@@ -240,7 +260,7 @@ export const AppProvider = ({ children }) => {
         payload: { user: userData }
       })
 
-      router.replace(`/${role}/dashboard`)
+      router.replace(isValidRedirect ? redirectPath : `/${role}/dashboard`)
 
       return userData
     } catch (error) {
@@ -271,7 +291,7 @@ export const AppProvider = ({ children }) => {
       dispatch({
         type: CONSTANTS.SIGN_OUT
       })
-
+      localStorage.removeItem('redirectAfterAuth')
       router.replace(`/${role}/auth`)
     } catch (error) {
       dispatch({
@@ -321,6 +341,16 @@ export const AppProvider = ({ children }) => {
     signinHandler,
     signoutHandler
   }
+
+  if (loading)
+  return (
+    <div className="flex items-center justify-center h-screen bg-gray-50">
+      <div className="text-xl font-semibold text-gray-700 animate-pulse">
+        Loading...
+      </div>
+    </div>
+  )
+
 
   return <Context.Provider value={value}>{children}</Context.Provider>
 }
