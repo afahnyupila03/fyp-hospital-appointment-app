@@ -8,10 +8,12 @@ const getHeaders = () => {
   }
 }
 
+const URL = `${process.env.NEXT_PUBLIC_BASE_URL/admin}`
+
 export const getDoctorsService = async (page, limit) => {
   try {
     const res = await fetch(
-      `http://localhost:4000/admin/doctors?page=${page}&limit=${limit}`,
+      `${URL}/doctors?page=${page}&limit=${limit}`,
       {
         headers: getHeaders()
       }
@@ -27,8 +29,9 @@ export const getDoctorsService = async (page, limit) => {
     const count = data.count
     const currentPage = data.currentPage
     const totalPages = data.totalPages
+    const message = data?.message
 
-    return { doctors, count, currentPage, totalPages }
+    return { doctors, count, currentPage, totalPages, message }
   } catch (error) {
     console.error('Admin-Doctors: ', error.message)
     throw error
@@ -38,7 +41,7 @@ export const getDoctorsService = async (page, limit) => {
 
 export const getDoctorService = async id => {
   try {
-    const res = await fetch(`http://localhost:4000/admin/doctor/${id}`, {
+    const res = await fetch(`${URL}/doctor/${id}`, {
       headers: getHeaders()
     })
 
@@ -68,7 +71,7 @@ export const getDoctorService = async id => {
 
 export const updateDoctorService = async (id, updateData) => {
   try {
-    const res = await fetch(`http://localhost:4000/admin/update-doctor/${id}`, {
+    const res = await fetch(`${URL}/update-doctor/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(updateData)
@@ -90,7 +93,7 @@ export const updateDoctorService = async (id, updateData) => {
 
 export const createDoctorService = async formData => {
   try {
-    const res = await fetch('http://localhost:4000/admin/create-doctor', {
+    const res = await fetch(`${URL}/create-doctor`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(formData)
@@ -113,7 +116,7 @@ export const createDoctorService = async formData => {
 export const archiveDoctorService = async (id, formData) => {
   try {
     const res = await fetch(
-      `http://localhost:4000/admin/archive-doctor/${id}`,
+      `${URL}/archive-doctor/${id}`,
       {
         method: 'PUT',
         headers: getHeaders(),
@@ -137,7 +140,7 @@ export const archiveDoctorService = async (id, formData) => {
 export const unarchiveDoctorService = async (id, formData) => {
   try {
     const res = await fetch(
-      `http://localhost:4000/admin/unarchive-doctor/${id}`,
+      `${URL}/unarchive-doctor/${id}`,
       {
         method: 'PUT',
         headers: getHeaders(),

@@ -44,6 +44,7 @@ export default function DoctorsPage () {
   const currentPage = data?.currentPage
   const isFirstPage = page === 1
   const isLastPage = page === data?.totalPages
+  const message = data?.message
 
   const tableHeaders = (
     <>
@@ -63,17 +64,24 @@ export default function DoctorsPage () {
     </>
   )
 
-  const tableData = doctors.map((doctor, index) => (
-    <tr key={doctor._id} className='border-b hover:bg-gray-50'>
-      <td className='px-4 py-2'>{index + 1}</td>
-      <td className='px-4 py-2'>{doctor.name}</td>
-      <td className='px-4 py-2'>{doctor.specialization}</td>
-      <td className='px-4 py-2'>{doctor.department}</td>
-      <td className='px-4 py-2'>
-        <Dropdown actions={actions(doctor)} />
-      </td>
-    </tr>
-  ))
+  const tableData =
+    data?.count === 0 ? (
+      <tr className='border-b hover:bg-gray-50'>
+        <td className='px-4 py-2'>{message}</td>
+      </tr>
+    ) : (
+      doctors.map((doctor, index) => (
+        <tr key={doctor._id} className='border-b hover:bg-gray-50'>
+          <td className='px-4 py-2'>{index + 1}</td>
+          <td className='px-4 py-2'>{doctor.name}</td>
+          <td className='px-4 py-2'>{doctor.specialization}</td>
+          <td className='px-4 py-2'>{doctor.department}</td>
+          <td className='px-4 py-2'>
+            <Dropdown actions={actions(doctor)} />
+          </td>
+        </tr>
+      ))
+    )
 
   return (
     <div className='p-6'>

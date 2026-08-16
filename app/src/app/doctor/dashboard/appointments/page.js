@@ -99,7 +99,7 @@ function AppointmentsPage () {
     count === 0 ? (
       <tr>
         <td colSpan={7} className='text-center py-10 text-gray-500'>
-          No appointments found at the moment.
+          No appointments found in system at the moment.
         </td>
       </tr>
     ) : (
@@ -114,7 +114,7 @@ function AppointmentsPage () {
         >
           <td className='py-3 px-4'>{index + 1}</td>
           <td
-            className='py-3 px-4 truncate max-w-[150px]'
+            className='py-3 px-4 truncate max-w-37.5'
             title={appointment.patientId?.name}
           >
             {appointment.patientId?.name || 'N/A'}
@@ -122,7 +122,7 @@ function AppointmentsPage () {
           <td className='py-3 px-4'>{appointment.patientId?.email || 'N/A'}</td>
           <td className='py-3 px-4'>{appointment.reason || 'N/A'}</td>
           <td
-            className='py-3 px-4 truncate max-w-[150px]'
+            className='py-3 px-4 truncate max-w-37.5'
             title={appointment.notes}
           >
             {appointment.notes || 'N/A'}

@@ -1,3 +1,5 @@
+import { PATIENT_URL } from './patientNotificationService'
+
 const getHeaders = () => {
   const token = localStorage.getItem('token')
   if (!token)
@@ -12,7 +14,7 @@ const getHeaders = () => {
 }
 
 export const createAppointmentService = async formData => {
-  const res = await fetch('http://localhost:4000/patient/create-appointment', {
+  const res = await fetch(`${PATIENT_URL}/create-appointment`, {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify(formData)
@@ -27,7 +29,7 @@ export const createAppointmentService = async formData => {
 
 export const viewAppointmentsService = async (page, limit) => {
   const res = await fetch(
-    `http://localhost:4000/patient/view-appointments?page=${page}&limit=${limit}`,
+    `${PATIENT_URL}/view-appointments?page=${page}&limit=${limit}`,
     {
       headers: getHeaders()
     }
@@ -39,21 +41,22 @@ export const viewAppointmentsService = async (page, limit) => {
       data.message || data.error || 'Error fetching doctors appointments'
     )
 
-  const appointments = data.appointments
+  const appointments = data?.appointments
   const count = data.count
+  const message = data?.message
   const currentPage = data.currentPage
   const totalPages = data.totalPages
+
+  if (count === 0)
+    return { count, message, currentPage, totalPages, appointments: [] }
 
   return { appointments, count, currentPage, totalPages }
 }
 
 export const viewAppointmentService = async id => {
-  const res = await fetch(
-    `http://localhost:4000/patient/view-appointment/${id}`,
-    {
-      headers: getHeaders()
-    }
-  )
+  const res = await fetch(`${PATIENT_URL}/view-appointment/${id}`, {
+    headers: getHeaders()
+  })
   console.log('patient appointment res: ', res)
   if (!res.ok) throw new Error('Error fetching doctor appointment')
   const data = await res.json()
@@ -63,14 +66,11 @@ export const viewAppointmentService = async id => {
 }
 
 export const updateAppointmentService = async (id, payload) => {
-  const res = await fetch(
-    `http://localhost:4000/patient/update-appointment/${id}`,
-    {
-      method: 'PUT',
-      headers: getHeaders(),
-      body: JSON.stringify(payload)
-    }
-  )
+  const res = await fetch(`${PATIENT_URL}/update-appointment/${id}`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(payload)
+  })
 
   const data = await res.json()
 
@@ -84,7 +84,7 @@ export const updateAppointmentService = async (id, payload) => {
 export const viewDoctorsService = async (page, limit) => {
   try {
     const res = await fetch(
-      `http://localhost:4000/patient/doctors?page=${page}&limit=${limit}`,
+      `${PATIENT_URL}/doctors?page=${page}&limit=${limit}`,
       {
         headers: getHeaders()
       }
@@ -117,7 +117,7 @@ export const viewDoctorsService = async (page, limit) => {
 
 export const viewDoctorService = async id => {
   try {
-    const res = await fetch(`http://localhost:4000/patient/doctor/${id}`, {
+    const res = await fetch(`${PATIENT_URL}/doctor/${id}`, {
       headers: getHeaders()
     })
 

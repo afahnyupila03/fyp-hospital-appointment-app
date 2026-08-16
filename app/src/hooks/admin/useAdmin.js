@@ -16,7 +16,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 
 const fetchDoctorMeta = async () => {
-  const res = await fetch('http://localhost:4000/api/meta/doctor-meta')
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/meta/doctor-meta`)
   if (!res.ok) {
     throw new Error('Error fetching doctor specialties and departments')
   }

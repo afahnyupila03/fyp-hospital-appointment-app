@@ -12,7 +12,7 @@ module.exports = {
           methods: ["GET", "PUT", "POST", "DELETE"],
         },
       });
-      // console.log("socket.io init success");
+      console.log("socket.io init success");
     }
     return io;
   },

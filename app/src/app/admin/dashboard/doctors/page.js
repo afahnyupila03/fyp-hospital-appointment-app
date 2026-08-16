@@ -48,6 +48,7 @@ export default function DoctorsHomePage () {
   const lastPage = page === totalPages
   const count = data?.count
   const currentPage = data?.currentPage
+  const message = data?.message
 
   if (isLoading) return <p>Loading doctor profiles</p>
   if (isError) return <p> {error}</p>
@@ -80,7 +81,7 @@ export default function DoctorsHomePage () {
           colSpan={6}
           className='px-4 py-6 text-center text-gray-500 italic border-b'
         >
-          No doctors in the system.
+          {message}
         </td>
       </tr>
     ) : (

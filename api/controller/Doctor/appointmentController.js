@@ -28,7 +28,15 @@ exports.viewAppointments = async (req, res) => {
     const totalPages = Math.ceil(count / limit)
     const currentPage = parseInt(page)
 
-    // console.log('APPOINTMENTS: ', appointments)
+    if (count === 0) {
+      return res.status(StatusCodes.OK).json({
+        count,
+        message: 'No booked appointments.',
+        appointments: [],
+        currentPages,
+        totalPages
+      })
+    }
 
     res.status(StatusCodes.OK).json({
       message: 'doctor appointments',
