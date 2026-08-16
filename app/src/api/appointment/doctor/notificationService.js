@@ -1,3 +1,5 @@
+
+
 const getHeaders = () => {
   const token = localStorage.getItem('token')
 
@@ -12,9 +14,12 @@ const getHeaders = () => {
   }
 }
 
+const URL = `${process.env.NEXT_PUBLIC_BASE_URL}/doctor/notification`
+const DELETE_URL = `${process.env.NEXT_PUBLIC_BASE_URL}/doctor/delete-notification`
+
 export const requestDoctorNotificationPermission = async granted => {
   const res = await fetch(
-    'http://localhost:4000/doctor/notification-permission',
+    `${URL}-permission`,
     {
       method: 'POST',
       headers: getHeaders(),
@@ -31,7 +36,7 @@ export const requestDoctorNotificationPermission = async granted => {
 
 export const viewDoctorNotifications = async (page, limit) => {
   const res = await fetch(
-    `http://localhost:4000/doctor/notifications?page=${page}&limit=${limit}`,
+    `${URL}s?page=${page}&limit=${limit}`,
     {
       headers: getHeaders()
     }
@@ -50,7 +55,7 @@ export const viewDoctorNotifications = async (page, limit) => {
 }
 
 export const viewDoctorNotification = async id => {
-  const res = await fetch(`http://localhost:4000/doctor/notification/${id}`, {
+  const res = await fetch(`${URL}/${id}`, {
     headers: getHeaders()
   })
 
@@ -63,7 +68,7 @@ export const viewDoctorNotification = async id => {
 
 export const updateDoctorNotificationStatus = async (id, status) => {
   const res = await fetch(
-    `http://localhost:4000/doctor/update-notification/${id}`,
+    `${URL}/${id}`,
     {
       method: 'PUT',
       headers: getHeaders(),
@@ -82,7 +87,7 @@ export const updateDoctorNotificationStatus = async (id, status) => {
 
 export const deleteDoctorNotification = async id => {
   const res = await fetch(
-    `http://localhost:4000/doctor/delete-notification/${id}`,
+    `${DELETE_URL}/${id}`,
     {
       method: 'DELETE',
       headers: getHeaders()

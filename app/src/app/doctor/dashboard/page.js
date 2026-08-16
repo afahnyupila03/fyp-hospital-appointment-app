@@ -183,7 +183,7 @@ export default function DoctorDashboardPage () {
     data?.count === 0 ? (
       <tr>
         <td colSpan={7} className='text-center py-10 text-gray-500'>
-          No appointments found at the moment.
+          No appointments found in system at the moment.
         </td>
       </tr>
     ) : (
@@ -198,7 +198,7 @@ export default function DoctorDashboardPage () {
         >
           <td className='py-4 px-6'>{(page - 1) * limit + index + 1}</td>
           <td
-            className='py-4 px-6 truncate max-w-[150px]'
+            className='py-4 px-6 truncate max-w-37.5'
             title={appointment.patientId.name}
           >
             {appointment.patientId.name}
@@ -206,7 +206,7 @@ export default function DoctorDashboardPage () {
           <td className='py-4 px-6'>{appointment.patientId.email}</td>
           <td className='py-4 px-6'>{appointment.reason}</td>
           <td
-            className='py-4 px-6 truncate max-w-[150px]'
+            className='py-4 px-6 truncate max-w-37.5'
             title={appointment.notes}
           >
             {appointment.notes}

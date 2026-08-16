@@ -117,12 +117,12 @@ export const Header = () => {
               href={redirectByUserRole(user)}
               className='flex items-center gap-2'
             >
-              <img src='../favicon.ico' alt='Logo' className='h-8 w-auto' />
+              <img src='/favicon.ico' alt='Logo' className='h-8 w-auto' />
               <span className='font-semibold'>CareConnect</span>
             </Link>
           ) : (
             <div className='flex items-center gap-2 opacity-50'>
-              <img src='../favicon.ico' alt='Logo' className='h-8 w-auto' />
+              <img src='/favicon.ico' alt='Logo' className='h-8 w-auto' />
               <span className='font-semibold'>CareConnect</span>
             </div>
           )}

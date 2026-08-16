@@ -11,9 +11,11 @@ const getHeaders = () => {
   }
 }
 
+const URL = `${process.env.NEXT_PUBLIC_BASE_URL}/doctor`
+
 export const viewAppointmentsService = async (page, limit) => {
   const res = await fetch(
-    `http://localhost:4000/doctor/view-appointments?page=${page}&limit=${limit}`,
+    `${URL}/view-appointments?page=${page}&limit=${limit}`,
     {
       headers: getHeaders()
     }
@@ -26,13 +28,14 @@ export const viewAppointmentsService = async (page, limit) => {
   const count = data.count
   const currentPage = data.currentPage
   const totalPages = data.totalPages
+  const message = data?.message
 
-  return { appointments, count, currentPage, totalPages }
+  return { message, appointments, count, currentPage, totalPages }
 }
 
 export const viewAppointmentService = async id => {
   const res = await fetch(
-    `http://localhost:4000/doctor/view-appointment/${id}`,
+    `${URL}/view-appointment/${id}`,
     {
       headers: getHeaders()
     }
@@ -47,7 +50,7 @@ export const viewAppointmentService = async id => {
 
 export const updateAppointmentService = async (id, status) => {
   const res = await fetch(
-    `http://localhost:4000/doctor/update-appointment/${id}`,
+    `${URL}/update-appointment/${id}`,
     {
       method: 'PUT',
       headers: getHeaders(),

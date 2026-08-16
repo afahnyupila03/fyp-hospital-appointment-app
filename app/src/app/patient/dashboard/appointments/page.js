@@ -64,15 +64,18 @@ export default function PatientAppointments () {
     )
   }
 
- const statusColor = (status) => {
-  switch (status) {
-    case 'pending': return 'bg-yellow-100 text-yellow-700'
-    case 'confirmed': return 'bg-green-100 text-green-700'
-    case 'cancelled': return 'bg-red-100 text-red-700'
-    default: return 'bg-gray-100 text-gray-600'
+  const statusColor = status => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-700'
+      case 'confirmed':
+        return 'bg-green-100 text-green-700'
+      case 'cancelled':
+        return 'bg-red-100 text-red-700'
+      default:
+        return 'bg-gray-100 text-gray-600'
+    }
   }
-}
-
 
   if (isLoading) {
     tableData = (
@@ -94,12 +97,12 @@ export default function PatientAppointments () {
     tableData = (
       <tr>
         <td colSpan={6} className='text-center py-4 text-gray-400'>
-          No appointments
+          {data?.message}
         </td>
       </tr>
     )
   } else {
-    tableData = data.appointments.map((app, i) => (
+    tableData = data?.appointments?.map((app, i) => (
       <tr key={app._id} className='border-t'>
         <td className='px-4 py-2'>{i + 1}</td>
         <td className='px-4 py-2'>{app.doctorId?.name}</td>

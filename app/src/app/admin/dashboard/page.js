@@ -100,6 +100,7 @@ export default function AdminDashboard () {
   const patientsFirstPage = patientsPage === 1
   const patientsCurrentPage = patientsData?.currentPage
   const patientsTotalPages = patientsData?.totalPages
+  const patientMessage = patientsData?.message
   const patientsLastPage = patientsPage === patientsTotalPages
 
   const {
@@ -113,6 +114,7 @@ export default function AdminDashboard () {
   const doctorsTotalPages = doctorsData?.totalPages
   const doctorsFirstPage = doctorsPage === 1
   const doctorsLastPage = doctorsPage === doctorsTotalPages
+  const doctorsMessage = doctorsData?.message
   const doctorsCurrentPage = doctorsData?.currentPage
 
   const { mutateAsync: archivePatient } = useArchivePatient()
@@ -264,7 +266,7 @@ export default function AdminDashboard () {
           colSpan={6}
           className='px-4 py-6 text-center text-gray-500 italic border-b'
         >
-          No patients in the system.
+          {patientMessage}
         </td>
       </tr>
     ) : (
@@ -321,7 +323,7 @@ export default function AdminDashboard () {
           colSpan={6}
           className='px-4 py-6 text-center text-gray-500 italic border-b'
         >
-          No doctors in the system.
+          {doctorsMessage}
         </td>
       </tr>
     ) : (

@@ -18,15 +18,15 @@ const generateToken = user => {
 }
 
 exports.initAdmin = async (req, res) => {
-  const adminExist = await Admin.findOne({ email: 'admin@gmail.com' })
+  const adminExist = await Admin.findOne({ email: String(process.env.ADMIN_EMAIL) })
 
   if (adminExist) return
 
-  const hashedPassword = await bcrypt.hash('1234567890', 12)
+  const hashedPassword = await bcrypt.hash(String(process.env.ADMIN_PASSWORD), 12)
 
   await Admin.create({
-    email: 'admin@gmail.com',
-    name: 'Admin',
+    email: String(process.env.ADMIN_EMAIL),
+    name: String(process.env.ADMIN_NAME),
     password: hashedPassword
   })
 
@@ -79,7 +79,7 @@ exports.loginAdmin = async (req, res) => {
         message: 'No admin account exist with email'
       })
     }
-    console.log('PASSWORD: ', password)
+    // console.log('PASSWORD: ', password)
     
 
     const isMatch = await bcrypt.compare(password, admin.password)

@@ -8,7 +8,7 @@ module.exports = {
       // Ensure init is only called once.
       io = new Server(httpServer, {
         cors: {
-          origin: "http://localhost:3000",
+          origin: process.env.CLIENT_URL,
           methods: ["GET", "PUT", "POST", "DELETE"],
         },
       });

@@ -9,6 +9,7 @@ const { createServer } = require('http')
 const { Server } = require('socket.io')
 const Socket = require('./socket')
 const cors = require('cors')
+const dotenv = require('dotenv')
 
 const adminRoutes = require('./routes/Admin/index')
 const doctorRoutes = require('./routes/Doctor/index')
@@ -19,6 +20,8 @@ const patientRoutes = require('./routes/Patient/index')
 const { initAdmin } = require('./controller/Admin/adminAuth.js')
 
 const app = express()
+dotenv.config()
+
 const httpServer = createServer(app)
 
 // Init socket.io
@@ -36,7 +39,7 @@ app.use(bodyParser.json())
 // CORS.
 app.use(
   cors({
-    origin: 'http://localhost:3000',
+    origin: process.env.CLIENT_URL,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
@@ -69,18 +72,17 @@ app.use(function (err, req, res, next) {
 })
 
 // MongoDB connection & start server
-const URL =
-  'mongodb+srv://fulopila9:9qVjS5mTfmDVn2G2@cluster0.xzpen8o.mongodb.net/CareConnect'
-
 mongoose
-  .connect(URL)
+  .connect(process.env.MONGODB_URL)
   .then(async () => {
     console.log('✅ Successfully connected to MongoDB')
 
     // Call init-Admin
     await initAdmin()
 
-    httpServer.listen(4000, () => {
+    const port = process.env.PORT ? Number(process.env.PORT) : 3000
+
+    httpServer.listen(port, () => {
       const io = Socket.getIo()
       io.on('connection', socket => {
         console.log('Socket id: ', socket.id)

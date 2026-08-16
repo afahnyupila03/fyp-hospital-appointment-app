@@ -12,9 +12,11 @@ const getHeaders = () => {
   }
 }
 
+export const PATIENT_URL = `${process.env.NEXT_PUBLIC_BASE_URL}/patient`
+
 export const requestPatientNotificationPermission = async granted => {
   const res = await fetch(
-    'http://localhost:4000/patient/notification-permission',
+    `${PATIENT_URL}/notification-permission`,
     {
       method: 'POST',
       headers: getHeaders(),
@@ -31,7 +33,7 @@ export const requestPatientNotificationPermission = async granted => {
 
 export const viewPatientNotifications = async (page, limit) => {
   const res = await fetch(
-    `http://localhost:4000/patient/notifications?page=${page}&limit=${limit}`,
+    `${PATIENT_URL}/notifications?page=${page}&limit=${limit}`,
     {
       headers: getHeaders()
     }
@@ -50,7 +52,7 @@ export const viewPatientNotifications = async (page, limit) => {
 }
 
 export const viewPatientNotification = async id => {
-  const res = await fetch(`http://localhost:4000/patient/notification/${id}`, {
+  const res = await fetch(`${PATIENT_URL}/notification/${id}`, {
     headers: getHeaders()
   })
 
@@ -65,7 +67,7 @@ export const viewPatientNotification = async id => {
 
 export const updatePatientNotificationStatus = async (id, payload) => {
   const res = await fetch(
-    `http://localhost:4000/patient/update-notification/${id}`,
+    `${PATIENT_URL}/update-notification/${id}`,
     {
       method: 'PUT',
       headers: getHeaders(),
@@ -84,7 +86,7 @@ export const updatePatientNotificationStatus = async (id, payload) => {
 
 export const deletePatientNotification = async id => {
   const res = await fetch(
-    `http://localhost:4000/patient/delete-notification/${id}`,
+    `${PATIENT_URL}/delete-notification/${id}`,
     {
       method: 'DELETE',
       headers: getHeaders()
