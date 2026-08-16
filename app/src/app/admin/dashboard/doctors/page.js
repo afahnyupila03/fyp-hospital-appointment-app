@@ -126,7 +126,7 @@ export default function DoctorsHomePage () {
         totalPages={totalPages}
         tableHeaders={doctorsTableHeaders}
         tableData={doctorsTableData}
-        nextPageHandler={p => (p < totalPages ? P + 1 : p)}
+        nextPageHandler={p => (p < totalPages ? p + 1 : p)}
         prevPageHandler={() => setPage(p => Math.max(p - 1, 1))}
       />
     </div>
