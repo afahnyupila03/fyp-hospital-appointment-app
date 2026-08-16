@@ -1,3 +1,4 @@
+
 'use client'
 
 import CustomInput from '@/components/CustomInput'
@@ -7,19 +8,19 @@ import {
 } from '@/hooks/patient/usePatient'
 import { Form, Formik } from 'formik'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 
-export default function BookAppointmentPage () {
+// 1. Inner component that reads searchParams and renders the form
+function BookAppointmentForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const id = searchParams.get('id')
   const name = searchParams.get('name')
-  console.log(id, name)
 
   const [selectedDoctor, setSelectedDoctor] = useState('')
   const [doctorSchedule, setDoctorSchedule] = useState([])
 
-  const { data, isLoading, isError, error, refetch } = usePatientDoctors()
+  const { data, isLoading, isError, error } = usePatientDoctors()
 
   useEffect(() => {
     if (selectedDoctor && data?.doctors) {
@@ -34,14 +35,12 @@ export default function BookAppointmentPage () {
     }
   }, [selectedDoctor, data])
 
-  // useEffect for doctorId && doctorName as query to book appointment.
   useEffect(() => {
     if (id && name && data?.doctors) {
       const doctor = data?.doctors.find(doc => doc._id === id)
-      console.log('query doctor: ', doctor)
       if (doctor) {
         setSelectedDoctor(doctor._id)
-        setDoctorSchedule(selectedDoctor.schedules || [])
+        setDoctorSchedule(doctor.schedules || []) // Fixed: references 'doctor' object instead of 'selectedDoctor' string
       }
     }
   }, [id, name, data?.doctors])
@@ -58,9 +57,7 @@ export default function BookAppointmentPage () {
     }
 
     try {
-      console.log('creating appointment...')
       await bookAppointment({ data })
-      console.log('appointment created.')
 
       if (id && name) {
         router.push('/patient/dashboard')
@@ -74,10 +71,7 @@ export default function BookAppointmentPage () {
   }
 
   const reasons = [
-    {
-      key: 'consultation',
-      label: 'Consultation'
-    },
+    { key: 'consultation', label: 'Consultation' },
     { key: 'follow-up', label: 'Follow-up' },
     { key: 'referral', label: 'Referral' }
   ]
@@ -85,6 +79,7 @@ export default function BookAppointmentPage () {
   return (
     <div className='max-w-2xl mx-auto p-6 bg-white shadow rounded-lg'>
       <Formik
+        enableReinitialize // Ensures Formik updates when query params populate initialValues
         initialValues={
           id && name
             ? {
@@ -168,7 +163,6 @@ export default function BookAppointmentPage () {
               </CustomInput>
             )}
 
-            {/* Display selected doctor's available days */}
             {doctorSchedule.length > 0 && (
               <div className='mb-4'>
                 <h4 className='font-semibold text-lg mb-2'>
@@ -195,11 +189,9 @@ export default function BookAppointmentPage () {
                   const inputDate = new Date(e.target.value)
                   const today = new Date()
 
-                  // Zero out the time for accurate date comparison
                   inputDate.setHours(0, 0, 0, 0)
                   today.setHours(0, 0, 0, 0)
 
-                  // Get selected day of the week in title case (e.g. "Monday")
                   const days = [
                     'Sunday',
                     'Monday',
@@ -225,7 +217,7 @@ export default function BookAppointmentPage () {
                 errors={errors}
                 touched={touched}
                 value={values.day}
-                min={new Date().toISOString().split('T')[0]} // disables past dates
+                min={new Date().toISOString().split('T')[0]}
               />
 
               <CustomInput
@@ -240,7 +232,7 @@ export default function BookAppointmentPage () {
                 touched={touched}
               >
                 <option value=''>Select appointment time</option>
-                {doctorSchedule.map((s, i) => (
+                {doctorSchedule.map(s => (
                   <option key={s._id} value={s.time}>
                     {s.time}
                   </option>
@@ -283,20 +275,22 @@ export default function BookAppointmentPage () {
             <button
               type='submit'
               className='bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:opacity-50 transition duration-200'
-              title={
-                isSubmitting
-                  ? 'Submitting'
-                  : !isValid
-                  ? 'Complete form to submit'
-                  : 'Submit'
-              }
               disabled={isSubmitting || !isValid}
             >
-              {isSubmitting ? 'Booking' : 'Book'}
+              {isSubmitting ? 'Booking...' : 'Book'}
             </button>
           </Form>
         )}
       </Formik>
     </div>
+  )
+}
+
+// 2. Exported page wrapper with Suspense boundary
+export default function BookAppointmentPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-center">Loading form...</div>}>
+      <BookAppointmentForm />
+    </Suspense>
   )
 }

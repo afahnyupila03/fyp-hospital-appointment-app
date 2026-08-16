@@ -74,7 +74,16 @@ export const AppProvider = ({ children }) => {
       router.replace(`/${role}/auth`)
       setLoading(false)
     } else {
-      setLoading(false)
+      dispatch({type:CONSTANTS.SET_LOADING, payload: {loading: false}})
+
+      if (role) {
+        router.replace(`/${role}/auth`)
+      } 
+      // else {
+      //   router.replace('/patient/auth')
+      // }
+
+      // router.replace(`/${role}/auth`)
     }
 
     // if (!isAuthenticated()) {
