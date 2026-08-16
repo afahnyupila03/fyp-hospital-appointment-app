@@ -69,9 +69,10 @@ export const AppProvider = ({ children }) => {
 
       if (role) {
         router.replace(`/${role}/auth`)
-      } else {
-        router.replace('/patient/auth')
-      }
+      } 
+      // else {
+      //   router.replace('/patient/auth')
+      // }
 
       // router.replace(`/${role}/auth`)
     }

@@ -8,7 +8,7 @@ const getHeaders = () => {
   }
 }
 
-const URL = `${process.env.NEXT_PUBLIC_BASE_URL/admin}`
+const URL = `${process.env.NEXT_PUBLIC_BASE_URL}/admin`
 
 export const getDoctorsService = async (page, limit) => {
   try {

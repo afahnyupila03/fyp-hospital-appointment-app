@@ -15,7 +15,7 @@ const getHeaders = () => {
   }
 }
 
-const URL = `${process.env.NEXT_PUBLIC_BASE_URL/admin}`
+const URL = `${process.env.NEXT_PUBLIC_BASE_URL}/admin`
 
 export const getPatientsService = async (page, limit) => {
   try {
